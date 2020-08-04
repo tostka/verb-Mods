@@ -1,11 +1,11 @@
-﻿# verb-mods.psm1
+﻿# verb-Mods.psm1
 
 
   <#
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.4.0
+  Version     : 1.0.2.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -205,7 +205,6 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
-    * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
     load-ModuleFT - Import-Module, with fault-tolerant coverage, when not available to load as normal module.
@@ -275,7 +274,7 @@ function load-ModuleFT {
             try {
                 import-module -name $tModDFile -force -DisableNameChecking
             } catch {
-                write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $($tModFile) !" ;
+                write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $(tModFile) !" ;
                 $tModFile = "$($tModName).ps1" ;
                 $sLoad = (join-path -path $LocalInclDir -childpath $tModFile) ;
                 if (Test-Path $sLoad) {       Write-Verbose -verbose ((Get-Date).ToString("HH:mm:ss") + "LOADING:" + $sLoad) ;
@@ -329,8 +328,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,load-Module,loa
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUwCz0XfkbQ/vodNjk9vwES4z1
-# l6qgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUrZcbzENcJ7cg9Jac/YuWRnsL
+# 9QSgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -345,9 +344,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,load-Module,loa
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSobnqb
-# iub+XwYMcw/93HiRVMLs5DANBgkqhkiG9w0BAQEFAASBgIujUkIUV0T/NMi+Rono
-# wpMbzhAaClb3Rnk9GXXCUVCRyAwviaoc7czoDGDqZ0iH3dWZvKXqVfycb0+yengW
-# wKYJNblZfwm8L+hHUrvUDSc5sdqqVl3RJ6Omsw2mhR9vpdEfhtt9QWH5n74S2fJ5
-# bc3SP6xKjH7RzqLkTMzfdvpA
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRmxo+U
+# iolBoB7fhrdghtP8TxoXozANBgkqhkiG9w0BAQEFAASBgH3gJ7MHFDX2vHP+jfUv
+# /09lDRY9ovJVz1Qt2XP231r3qBWFh9K5PavtBBfXOMoX3Bl/ds0URYBQJzy6FGm8
+# lbkJ5hz7S+O0goqERitiHjLgKGYKG2yFXgBQxyEg1nfSbKu3Az1e0FtLjqDfK1+d
+# eBxsVQQjmR3A3Jq7GLCgESTe
 # SIG # End signature block

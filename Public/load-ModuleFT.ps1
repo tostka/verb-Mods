@@ -15,6 +15,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
+    * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
     load-ModuleFT - Import-Module, with fault-tolerant coverage, when not available to load as normal module.
@@ -84,7 +85,7 @@ function load-ModuleFT {
             try {
                 import-module -name $tModDFile -force -DisableNameChecking
             } catch {
-                write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $(tModFile) !" ;
+                write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $($tModFile) !" ;
                 $tModFile = "$($tModName).ps1" ;
                 $sLoad = (join-path -path $LocalInclDir -childpath $tModFile) ;
                 if (Test-Path $sLoad) {       Write-Verbose -verbose ((Get-Date).ToString("HH:mm:ss") + "LOADING:" + $sLoad) ;
