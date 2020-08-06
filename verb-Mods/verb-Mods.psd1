@@ -12,7 +12,7 @@
 RootModule = 'verb-Mods.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.5'
+ModuleVersion = '1.0.6'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,7 +69,7 @@ Description = 'Generic module-related functions'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','load-Module','load-ModuleFT','uninstall-ModulesObsolete')
+FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','Get-ModulePublishedVersion','load-Module','load-ModuleFT','uninstall-ModulesObsolete')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
@@ -126,8 +126,8 @@ PrivateData = @{
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUt/tuSCKearhkXqk/K9P8Y3E9
-# X5OgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUtnI+cpK8aSjWXz+T7Hkwaqma
+# vMmgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -142,9 +142,9 @@ PrivateData = @{
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRr8phZ
-# bYjIpoAr2pkP0bPWMcb76zANBgkqhkiG9w0BAQEFAASBgJQXw/UuPOjKYvL4B+87
-# IjNpR7D/RPIivBCjhcit78OXuVq16tIjEUpaTD4/XRoMZuv9cbPd9FZk24GGTvQe
-# q8t0nAbkevPIRIcW0olZxr0Qw/AVmpj6PZk/6Ydke/e7v34peRYZT9R4nhYh05+L
-# er+9JytOe77+ck2kFani2Oly
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBS3m9bl
+# +kwvP1Bn4BZr1q/09bJXYzANBgkqhkiG9w0BAQEFAASBgH+cUMCcKybjqaAhQwjc
+# KE+rsHDzMXGdwTFJZpcDNdSyCTTw52UtZur6vIjlINUPs6v7Hisv017AY+WadkAW
+# jwVS0lbJ7CyloDgbzJrqsQYyXaHhWf67mEXXnLcsn143V1yDczuY2RZY7/04pIAk
+# 5/ECeaRTgq/jHRJc+EtXpuKt
 # SIG # End signature block

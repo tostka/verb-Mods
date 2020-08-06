@@ -121,5 +121,5 @@ function uninstall-ModulesObsolete {
         else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
     } ; 
     END{ } ;
-}
+} ; 
 #*------^ uninstall-ModulesObsolete.ps1 ^------
