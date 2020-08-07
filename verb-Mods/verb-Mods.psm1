@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.6.0
+  Version     : 1.0.10.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -139,11 +139,13 @@ Author      : Todd Kadrie
     AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/getting-latest-powershell-gallery-module-version
     AddedTwitter: 
     REVISIONS
+    * 4:51 PM 8/7/2020 added -noWeb (forces to use find-module), expanded to support local repos (queries get-PSRepository for local, differentiates on UNC (use find-module) v uri (use web) SourceLocation;  add & return the Path (fr get-installedmodule.InstalledLocation) for factoring updates against AllUsers & CurrentUser scopes (important distinction where users don't have local\Administrators) ; removed strong regex type on Repository, permits more flexible matching options.
     * 10:55 AM 8/6/2020 tsk: substantially rewrote from base url-retrieval snippet 
     * Posted vers has no datestamp, comments "more than 4 yrs ago"
     .DESCRIPTION
     Get-ModulePublishedVersion - Query the most current version of a published module
-    Where no -Modules are specified, get-InstalledModule retrieves all PSGallery modules, and prompts for selections using Out-Gridview. 
+    Supports PSGallery (via default web access), or other modules via slower Find-Module query (trigger with -NoWeb)
+    Where no -Modules are specified, get-InstalledModule retrieves all modules, and prompts for selections using Out-Gridview. 
     Repository is defaulted to a regex, because MS can't settle on a *single* Repository value for their range of PSG modules: Some use a full https...powershellgallery url, and some the abbreviating tag 'PSRepository'. 
     And *bonus* the old url value doesn't even work properly with the Update-Module cmdlet (throws not found). Have to use Find-Module -Name xxx, to properly locate & update those items.
     Product of the official PSGallery Repository string dropping the trailing '/' from the https specification, in a later revision. 
@@ -152,14 +154,18 @@ Author      : Todd Kadrie
     # PSG repo ref changed from ending in '/', to not ending in '/', which broke update-module use on all of the older ref mods
     Get-InstalledModule |? { $_.Repository -eq 'https://www.powershellgallery.com/api/v2/' } |
       % { Install-Package -Name $_.Name -Source PSGallery -Force -whatif } ; 
-#-=-=-=-=-=-=-=-=
+    #-=-=-=-=-=-=-=-=
     .PARAMETER Modules
     Specific Module(s) to be processed[-Modules array-of-module-descrptors]
     .PARAMETER Repository
-    Regex matching Source Repository for which Modules should to be processed[-Repository PSGallery]
+    Regex matching Source Repository for which Modules should to be processed (single-word specs 'reponame' will work without regex syntax) [-Repository PSGallery]
+    .PARAMETER noWeb
+    Switch to force use of Find-Module (over Web access which is substantially faster)[-noWeb]
+    .OUTPUT
+    System.Management.Automation.PSCustomObject
     .EXAMPLE
-    Get-ModulePublishedVersion -Modules ISESteroids
-    Retrieve latest vers of ISESteriods psg module
+    Get-ModulePublishedVersion -Modules AzureAD
+    Retrieve latest vers of AzureAD (PSGallery) module
     .EXAMPLE
     Get-ModulePublishedVersion -Modules 'Azure','ExchangeOnlineManagement','Microsoft.Graph','MicrosoftTeams','MSOnline','AzureRM' -verbose
     Get update info about specific modules
@@ -179,7 +185,15 @@ Author      : Todd Kadrie
           }  
       } ;
     } ;
-    Store update info about specific modules into a variable then run updates (via update-Module or Install-Package) against available upgrades
+    Store update info about specific modules into a variable then run updates (via update-Module or Install-Package) against available upgrades (could postfilter on returned 'Path' value, to target AllUsers v CurrUser Module locations, as well)
+    .EXAMPLE
+    $modsstatus = Get-ModulePublishedVersion -Repository '(localrepo1|localrepo2)'
+    $whatif = $true ;
+    foreach ($mod in ($ModsStatus|?{$_.status -like 'UPGRADE*'})){
+        "===$($mod.ModuleName):" ;
+        get-installedmodule -name $mod.modulename | Update-Module -whatif:$($whatif)  ;
+    } ;
+    Query all modules on two different registered repos (as speciffied by the -Repository regex OR filter), and perform updates on matching mods
     .LINK
     https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/getting-latest-powershell-gallery-module-version
     #>
@@ -188,10 +202,14 @@ Author      : Todd Kadrie
         [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Specific Module(s) to be processed[-Modules array-of-module-descrptors]")]
         [Alias('Name')]$Modules,
         [Parameter(HelpMessage="Regex matching Source Repository for which Modules should to be processed[-Repository PSGallery]")]
-        [regex]$Repository
+        $Repository,
+        [Parameter(HelpMessage="Switch to force use of Find-Module (over Web access which is substantially faster)[-noWeb]")]
+        [switch] $noWeb
     ) ; 
     BEGIN {
         $verbose = ($VerbosePreference -eq "Continue") 
+        $rgxURL="https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)"
+
         if(!$ThrottleMs){$ThrottleMs=500 }
         # PSG root url used to build rev queries
         $PSGBaseQryUrl = "https://www.powershellgallery.com/packages/" ; 
@@ -199,6 +217,13 @@ Author      : Todd Kadrie
         $PSGregexURI = 'https://www.powershellgallery.com/api/v2/'
         [regex]$rgxPSGMsRepoTag =  ('(' + ((($PSGregexURI,'PSGallery') |%{[regex]::escape($_)}) -join '|') + ')') ; 
         if(!$Repository){$Repository = $rgxPSGMsRepoTag } ; 
+        $error.clear() ;
+        TRY {
+            $regRepos = get-psrepository ; 
+        } CATCH {
+            Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
+            break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+        } ; 
     } ;
     PROCESS {
         if(!$Modules){
@@ -208,6 +233,7 @@ Author      : Todd Kadrie
             if($Repository){
                 $tModules = $tModules|?{$_.Repository -match $Repository}  ; 
             } ; 
+            # display gridview to select specific targets 
             $tModules = $tModules| Out-GridView -Title 'Select the module(s) you want the version information from.' -PassThru ; 
         } else { 
             $smsg = "$(($Modules|measure).count) specific Modules specified`n$(($Modules|out-string).trim())" ; 
@@ -225,37 +251,89 @@ Author      : Todd Kadrie
         $Report = @() ;
         foreach ($Module in $tModules) {
             $Procd++ ;
-            #$sBnr="#*======v ($($Procd)/$($ttl)):PROCESSING:$($Module.name) v======" ; 
-            #$sBnr="===($($Procd)/$($ttl)):Processing:$($Module.name)" ; 
             $smsg = "===($($Procd)/$($ttl)):Processing:$($Module.name)" ; 
             write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)"  ;
+
+            $qryMethod=$null ; 
+            if($tRepo = $Module.Repository = $regRepos | ?{$_.Name -eq $Module.Repository} ){
+
+                #if($tRepo.PublishLocation -match $rgxurl -AND -not($noWeb) -AND ($tRepo.SourceLocation -eq $PSGregexURI) ){
+                # above was an attempt to leverage the PSRepository registered uri values for web queries, but they don't appear functional, at least not for PSGallery
+                if(-not($noWeb) -AND ($tRepo.SourceLocation -eq $PSGregexURI) ){
+                    $qryMethod='PSGWeb' ; # 6x faster than find-module
+                } elseIf( ([System.Uri]$tRepo.PublishLocation).IsUnc -OR ($noWeb) ) {
+                    # use find-mod for local UNC-based repos
+                    $qryMethod = 'findMod' ; 
+                } else {
+                    # fall back to slower find-module queries (6x slower for web)
+                    $qryMethod = 'findMod' ; 
+                } ; 
+
+            } else {
+                write-error "$((get-date).ToString('HH:mm:ss')):$($Module.name) repo of record ($($Module.Repository.name)) did not resolve to a current PSRepository entry`nSKIPPING";
+                break ; 
+            }; 
+
+            write-verbose "$((get-date).ToString('HH:mm:ss')):(using qryMethod:$($qryMethod))" ;
+            switch ($qryMethod) {
+                'PSGWeb' {
+                    # access the main module page, and add a random number to trick proxies
+
+                    <# try using the PSRepository $tRepo.PublishLocation: https://www.powershellgallery.com/api/v2/package/ 
+                    #$url = "$($tRepo.PublishLocation)$($Module.name)/?dummy=$(Get-Random)" ; # - doesn't work it may be published, but you need to use the unpublished uri to query version.
+                    if($tRepo.SourceLocation -eq $PSGregexURI ){
+                        $url = "$($PSGBaseQryUrl)$($Module.name)/?dummy=$(Get-Random)" ; 
+                    } else { 
+                        throw "Non-PSGallery SourceLocation: specified repo isn't compatible with this scripot" ;
+                        break ; 
+                    } ; 
+                    #>
+                    $url = "$($PSGBaseQryUrl)$($Module.name)/?dummy=$(Get-Random)" ; 
+                    write-verbose "using url:$($url)" ; 
+                    $request = [System.Net.WebRequest]::Create($url) ; 
+                    # do not allow to redirect. The result is a "MovedPermanently"
+                    $request.AllowAutoRedirect=$false ; 
+                    try {
+                        # send the request
+                        $response = $request.GetResponse() ; 
+                        # get back the URL of the true destination page, and split off the version
+                        [version]$PublVers = $response.GetResponseHeader("Location").Split("/")[-1] -as [Version] ; 
+                        # make sure to clean up
+                        $response.Close() ; 
+                        $response.Dispose() ; 
+                    } CATCH {
+                        $ErrTrapd=$Error[0] ;
+                        $smsg= "Failed to exec cmd because: $($ErrTrapd)" ;
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error} ; #Error|Warn
+                        Continue ;#Continue/Exit/Stop
+                    } ;  
+                } 
+                'findMod' {
+                    # local UNC psrepo or undocumented registered repo, use Find-Module to query
+                    # find-module -Repository -Name -AllVersions -MaximumVersion
+                    try {
+                        $pltFMod=[ordered]@{
+                            Repository = $tRepo.Name ; 
+                            Name = $Module.name ; 
+                        } ; 
+                        write-verbose "$((get-date).ToString('HH:mm:ss')):find-module w`n$(($pltFMod|out-string).trim())" ; 
+                        [version]$PublVers = (find-module @pltFMod | sort version -desc)[0].version ; 
+                    } CATCH {
+                        $ErrTrapd=$Error[0] ;
+                        $smsg= "Failed to exec cmd because: $($ErrTrapd)" ;
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error} ; #Error|Warn
+                        Continue ;#Continue/Exit/Stop
+                    } ;  
+                } 
+            } ; 
             
-            # access the main module page, and add a random number to trick proxies
-            $url = "$($PSGBaseQryUrl)$($Module.name)/?dummy=$(Get-Random)" ; 
-            write-verbose "using url:$($url)" ; 
-            $request = [System.Net.WebRequest]::Create($url) ; 
-            # do not allow to redirect. The result is a "MovedPermanently"
-            $request.AllowAutoRedirect=$false ; 
-            try {
-                # send the request
-                $response = $request.GetResponse() ; 
-                # get back the URL of the true destination page, and split off the version
-                $PublVers = $response.GetResponseHeader("Location").Split("/")[-1] -as [Version] ; 
-                # make sure to clean up
-                $response.Close() ; 
-                $response.Dispose() ; 
-            } CATCH {
-                $ErrTrapd=$Error[0] ;
-                $smsg= "Failed to exec cmd because: $($ErrTrapd)" ;
-                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error} ; #Error|Warn
-                Continue ;#Continue/Exit/Stop
-            } ;  
             $stat =  [ordered]@{
                 ModuleName = $Module.name ; 
-                CurrentVers = $module.Version.tostring() ; 
+                CurrentVers = [version]$module.Version.tostring() ; 
                 PublishedVers = $PublVers.tostring() ; 
-                Status = if($module.Version -lt $PublVers){"UPGRADE AVAIL"}else{""} ; 
-                Repository = $module.Repository ; 
+                Status = if([version]$module.Version -lt [version]$PublVers){"UPGRADE AVAIL"}else{""} ; 
+                Repository = $module.Repository.name ; 
+                Path = $module.installedlocation ; 
             } ; 
             $Report += new-object psobject -Property $stat ; 
             start-sleep -Milliseconds $ThrottleMs ; 
@@ -482,19 +560,30 @@ function uninstall-ModulesObsolete {
     Twitter     : @tostka / http://twitter.com/tostka
     CreatedDate : 2018-03-24
     FileName    : uninstall-ModulesObsolete.ps1
-    License     : (none asserted)
-    Copyright   : (c) 2020 Todd Kadrie
+    License     : MIT
+    Copyright   : (c) 4/7/2020 Todd Kadrie
     Github      : https://github.com/tostka
     Tags        : Powershell,Module,Lifecycle
     AddedCredit : Jack Fruh
     AddedWebsite: http://sharepointjack.com/2017/powershell-script-to-remove-duplicate-old-modules/
     AddedTwitter: @sharepointjack / http://twitter.com/sharepointjack	
     REVISIONS
-    * 1:03 PM 8/5/2020, rewrote & expanded concept as func, added to verb-Mods
-    * 11:25 AM 3/24/2018 posted/updated vers
+    * 12:38 PM 8/7/2020 added -scope vari, and test for local\Administrators (when running AllUsers scope uninstalls), fixed comparison typo #78
+    * 1:03 PM 8/5/2020, rewrote & expanded orig concept as func, added to verb-Mods
     .DESCRIPTION
     uninstall-ModulesObsolete - Remove old versions of Powershell modules, leaving most current - does note that later revs are published & available)
-    Extension of version posted at Jack Fruh's blog.
+    Inspired by original concept posted at Jack Fruh's blog.
+    .PARAMETER Modules
+    Specific Module(s) to be processed[-Modules array-of-module-descrptors]
+    .PARAMETER Repository
+    Source Repository, for which *all* associated local installed modules should be processed[-Repository 'repo1','repo2']
+    .PARAMETER Scope
+    Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]
+    .PARAMETER whatIf
+    Whatif Flag  [-whatIf]
+    .EXAMPLE
+    uninstall-ModulesObsolete -scope AllUsers -verbose -whatif ;
+    Run a whatif pass at uninstalling all obsolete module version in the AllUsers scope
     .EXAMPLE
     uninstall-ModulesObsolete -verbose -whatif ;
     Run a whatif pass at uninstalling all obsolete module version
@@ -507,32 +596,62 @@ function uninstall-ModulesObsolete {
     .LINK
     https://github.com/tostka
     #>
+    #Requires -Modules verb-Auth
+    #Requires -Version 3
     [CmdletBinding()] 
     PARAM(
-        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Specific Module(s) to be processed[-Modules array-of-module-descrptors]")]
+        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of specific Module(s) to be processed[-Modules 'mod1','mod2']")]
         [Alias('Name')]$Modules,
-        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Source Repository, for which *all* associated local installed modules should be processed[-Repository 'repo1','repo2']")]
+        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Source Repository, for which *all* associated local installed modules should be processed (should match Repository property of module, as returned by Get-InstalledModule cmdlet)[-Repository 'Repo1']")]
         [array]$Repository,
+        [Parameter(HelpMessage="Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]")]
+        [ValidateSet("AllUsers","CurrentUser")]
+        [array]$Scope,
         [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
         [switch]$whatIf
     ) ;
-    BEGIN {$verbose = ($VerbosePreference -eq "Continue") } ;
+    BEGIN {
+        $verbose = ($VerbosePreference -eq "Continue") ; 
+        # construct dynamic scope regex's (accomodates profile redirection and system variant progfiles locations)
+        # AllUsers scope
+        [regex]$rgxModsAllUsersScope="^$([regex]::escape([environment]::getfolderpath('ProgramFiles')))\\((Windows)*)PowerShell\\Modules" ;
+        # CurrUser scope
+        [regex]$rgxModsCurrUserScope="^$([regex]::escape([environment]::getfolderpath('Mydocuments')))\\((Windows)*)PowerShell\\Modules" ;
+    } ;
     PROCESS {
         if(!$Modules){
             $smsg = "Gathering all installed modules..." ; 
             if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
             else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
             $tModules = get-installedmodule ;
-            if($Repository){
-                $tModules = $tModules|?{$_.Repository -ne $Repository} ; 
-            } ; 
         } else { 
             $smsg = "$(($Modules|measure).count) specific Modules specified`n$(($Modules|out-string).trim())" ; 
             if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
             else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
             $tModules = ($modules | %{get-installedmodule $_ | write-output } ) ;
-            if($Repository){
-                $tModules = $tModules|?{$_.Repository -eq $Repository} ; 
+        } ; 
+        if($Repository){
+            $tModules = $tModules|?{$_.Repository -eq $Repository} ; 
+        } ; 
+        if($Scope){
+            switch ($Scope){
+                "AllUsers" {
+                    $smsg = "(-scope AllUsers specified, filtering...)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope} ;
+                } 
+                "CurrentUser" {
+                    $smsg = "(-scope CurrentUser specified, filtering...)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsCurrUserScope} 
+                } 
+                "default" {
+                    $smsg = "(no scope specified, all modules from AllUsers and $($env:USERNAME)'s profile will be targeted)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                } 
             } ; 
         } ; 
         $ttl=($tModules|Measure-Object).count ;
@@ -540,6 +659,20 @@ function uninstall-ModulesObsolete {
         $smsg = "($(($tModules|measure).count) modules returned)" ; 
         if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
         else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+        if($AllUMods = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope}){
+            if (-not(Test-IsLocalAdmin)){
+                $smsg = "Some modules targeted are in the *AllUsers* context (within ProgramFiles)...`n$(($AllUMods|ft -a InstalledLocation|out-string).trim())`nInstallation/Uninstallation from that context *requires* local\Administrator permissions, which are not currently available under $($env:USERDOMAIN)\$($env:USERNAME). EXITING!" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error } #Error|Warn|Debug 
+                else{ write-warning -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                throw "AllUsers Modules targeted, non-local\Administrator permisisons present." ; 
+                break ; 
+            } ; 
+        } else { 
+            $smsg = "(no modules from AllUsers scope are targeted)" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        } ; 
 
         foreach ($Module in $tModules) {
             $Procd++ ;
@@ -580,7 +713,7 @@ function uninstall-ModulesObsolete {
                     else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
                 } ; # loop-E
             } else {
-                $smsg="(Only a single versions found $($Module.name), skipping)" ;
+                $smsg="(Only a single version found $($Module.name), skipping)" ;
                 if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
                 else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
             }; 
@@ -605,8 +738,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,Get-ModulePubli
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUg4UtZHjuSW1HVocUBVTLt0IC
-# U6SgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUN7jMqnpdxMaTkJbE1W/JoBer
+# cSKgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -621,9 +754,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,Get-ModulePubli
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQNvzep
-# u9PUPedawTJHz78tdsmeCzANBgkqhkiG9w0BAQEFAASBgGaLpZY2/h+Gq6PsNQ+/
-# 0MxHP7DuFhP5AlU0tZjamnQJQPCShoFxv4KtLfs6QVvSIbqRneFhin6YV1wzwGji
-# +QmASdCPDaBRJkT6c4s/KYguNi3g7eqCk4zkRyRoJqBtUhELHvlysE5nQcx/idyX
-# svs8BOfO+QT+4GHm2TKGV9kp
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQ1mL3q
+# ZPsxoETgRS+T5DqmyuoccDANBgkqhkiG9w0BAQEFAASBgCNQgjrU/r5z3y1BcJel
+# 1GHoraTe9xTT/xhlARv9+gsJ27HERUQ5YR+kcko15HcSs91U6W2G4xffAWZxuyN7
+# C60pC7rVHHgUoyU9zJff7DeBT3M1tx4xMGXwvveqTtEjH3EyqT49rUuDgvRGhEFb
+# EBL3QVLK66nXcljrtTFwOD7S
 # SIG # End signature block
