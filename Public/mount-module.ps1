@@ -15,6 +15,7 @@ function mount-Module {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell
     REVISIONS
+    * 3:42 PM 9/28/2020 fixed that trailing-$ typo again
     * 7:42 AM 9/25/2020 duped from admin-prof.ps1 -> verb-mods
     * 4:31 PM 9/24/2020 init
     .DESCRIPTION
@@ -91,7 +92,7 @@ function mount-Module {
                 $MyBoxW { $pltIMod.scope = 'CurrentUser' }
                 default { $pltIMod.scope = 'AllUsers' }
             }
-            write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod$|out-string).trim())" ; 
+            write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
             try {
                 Install-Module @pltIMod -ErrorAction Stop ; 
                 import-module -name $Name -force -ErrorAction Stop;
