@@ -1,4 +1,4 @@
-#*------v Function load-ModuleFT v------
+#*------v load-ModuleFT.ps1 v------
 function load-ModuleFT {
     <#
     .SYNOPSIS
@@ -15,6 +15,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
@@ -75,15 +76,27 @@ function load-ModuleFT {
         if($lVers){
             $lVers=($lVers | sort version)[-1];
             try {
-                import-module -name $tModName -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking   
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
+                import-module -name $tModName -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking 
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } catch {
                 write-warning "*BROKEN INSTALLED MODULE*:$($tModName)`nBACK-LOADING DCOPY@ $($tModDFile)" ;
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $tModDFile -force -DisableNameChecking   
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } ;
         } elseif (test-path $tModFile) {
             write-warning "*NO* INSTALLED MODULE*:$($tModName)`nBACK-LOADING DCOPY@ $($tModDFile)" ;
             try {
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $tModDFile -force -DisableNameChecking
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } catch {
                 write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $($tModFile) !" ;
                 $tModFile = "$($tModName).ps1" ;
@@ -127,4 +140,6 @@ function load-ModuleFT {
     END {
         $ModStatus | write-output ;
     } ; 
-} #*------^ END Function load-ModuleFT ^------ ;
+}
+
+#*------^ load-ModuleFT.ps1 ^------

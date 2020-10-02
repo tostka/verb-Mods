@@ -1,4 +1,4 @@
-﻿#*------v Function load-Module v------
+﻿#*------v load-Module.ps1 v------
 function load-Module {
     <#
     .SYNOPSIS
@@ -17,6 +17,7 @@ function load-Module {
     AddedWebsite:	URL
     AddedTwitter:	URL
     REVISIONS
+    * 10:17 AM 10/1/2020 added import-module verbose tmp supporess
     * 7:29 AM 1/29/2020 added pshelp, version etc (copying into verb-dev)
     * 8/28/2019 init
     .DESCRIPTION
@@ -44,7 +45,10 @@ function load-Module {
     $Verbose = ($VerbosePreference -eq "Continue") ; 
     if!(Get-Module -Name $Module){
         if (Get-Module -Name $Module -ListAvailable) {
+            if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             Import-Module $Module ;
+            # reenable VerbosePreference:Continue, if set, during mod loads 
+            if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
         } else {
             write-host -foregroundcolor RED "$((get-date).ToString('HH:mm:ss')):ERROR!:The $($Module) module is *NOT* INSTALLED!.`n Checking for available copy..." ;
             if(find-module $Module){
@@ -63,4 +67,6 @@ function load-Module {
             } ;
         } ;
     } ;
-} #*------^ END Function load-Module ^------ ;
+}
+
+#*------^ load-Module.ps1 ^------

@@ -1,11 +1,11 @@
-﻿# verb-Mods.psm1
+﻿# verb-mods.psm1
 
 
   <#
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.14.0
+  Version     : 1.0.15.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -365,6 +365,7 @@ function load-Module {
     AddedWebsite:	URL
     AddedTwitter:	URL
     REVISIONS
+    * 10:17 AM 10/1/2020 added import-module verbose tmp supporess
     * 7:29 AM 1/29/2020 added pshelp, version etc (copying into verb-dev)
     * 8/28/2019 init
     .DESCRIPTION
@@ -392,7 +393,10 @@ function load-Module {
     $Verbose = ($VerbosePreference -eq "Continue") ; 
     if!(Get-Module -Name $Module){
         if (Get-Module -Name $Module -ListAvailable) {
+            if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             Import-Module $Module ;
+            # reenable VerbosePreference:Continue, if set, during mod loads 
+            if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
         } else {
             write-host -foregroundcolor RED "$((get-date).ToString('HH:mm:ss')):ERROR!:The $($Module) module is *NOT* INSTALLED!.`n Checking for available copy..." ;
             if(find-module $Module){
@@ -432,6 +436,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
@@ -492,15 +497,27 @@ function load-ModuleFT {
         if($lVers){
             $lVers=($lVers | sort version)[-1];
             try {
-                import-module -name $tModName -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking   
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
+                import-module -name $tModName -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking 
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } catch {
                 write-warning "*BROKEN INSTALLED MODULE*:$($tModName)`nBACK-LOADING DCOPY@ $($tModDFile)" ;
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $tModDFile -force -DisableNameChecking   
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } ;
         } elseif (test-path $tModFile) {
             write-warning "*NO* INSTALLED MODULE*:$($tModName)`nBACK-LOADING DCOPY@ $($tModDFile)" ;
             try {
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $tModDFile -force -DisableNameChecking
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             } catch {
                 write-error "*FAILED* TO LOAD MODULE*:$($tModName) VIA $($tModFile) !" ;
                 $tModFile = "$($tModName).ps1" ;
@@ -565,6 +582,7 @@ function mount-Module {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell
     REVISIONS
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 3:42 PM 9/28/2020 fixed that trailing-$ typo again
     * 7:42 AM 9/25/2020 duped from admin-prof.ps1 -> verb-mods
     * 4:31 PM 9/24/2020 init
@@ -608,6 +626,7 @@ function mount-Module {
         [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
         [switch] $whatIf=$true
     ) ;
+    $Verbose = ($VerbosePreference -eq "Continue") ; 
     $smsg = "( processing `$Name:$($Name)`t`$BackupPath:$($BackupPath)`t`$CommandVerify:$($CommandVerify) )" ; 
     if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
     else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
@@ -618,12 +637,16 @@ function mount-Module {
     if($lVers){
         $lVers=($lVers | sort version)[-1] ;
         try {
+            # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+            if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             import-module -name $Name -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking   
+            # reenable VerbosePreference:Continue, if set, during mod loads 
+            if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ;
         } catch {
             write-warning "*BROKEN INSTALLED MODULE*:$($Name)!" ;
             #import-module -name $tModDFile -force -DisableNameChecking   ;
             if(!$NoBackup -AND (gcm load-ModuleFT)){
-                load-ModuleFT -tModName $tModName -tModFile $tModFile -tModCmdlet $tModCmdlet ; 
+                load-ModuleFT -tModName $tModName -tModFile $tModFile -tModCmdlet $tModCmdlet -Verbose:$($verbose) ; 
             } ;
         } ;
     } elseif ($localPSRepo){
@@ -645,7 +668,11 @@ function mount-Module {
             write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
             try {
                 Install-Module @pltIMod -ErrorAction Stop ; 
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $Name -force -ErrorAction Stop;
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ;
             } catch {
                 Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
                 Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
@@ -921,8 +948,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,Get-ModulePubli
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXie54y5q2IbLSxy4tOjfvu1a
-# MySgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU5563yUyK14xGIx3hturfzLO0
+# /R2gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -937,9 +964,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,Get-ModulePubli
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTGRZ0r
-# TnyirOcDKQZFQQrb8vcPaDANBgkqhkiG9w0BAQEFAASBgEEvQaQO+QWqNeOzQ6ut
-# inJ1ulVitd9TwSerCHnY63fDYdgrsagUxJvX64tTyVUy6S4eMj766xQWmXnT7LBs
-# 1B7EhjSOE83JCmFvzE0fjy/doc3hYwLDNXWP7YKzLjsiQVOLcT7wHJVvLN+w2+Gg
-# WH55HeuXoYA4lTjqgJNMghWT
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTglrDS
+# ca9v1NtG8I2+4xLhntgH1zANBgkqhkiG9w0BAQEFAASBgJY6rIJDyB4Zu1MGolpz
+# 43o7i4nDAzpSHJw1OZcC2jtPl9ET0Pw5bwrSP7+CYJ5IdwRqTJkOEICM9hBe922x
+# BTUnakMFXCCZetdKhXyDj9CakI0NNk8PSm6QcGxdkYdq2+tX4wHr4LgKoIEoLgrf
+# 7gPDqy0i/0hDXNjPf7qAq0b0
 # SIG # End signature block

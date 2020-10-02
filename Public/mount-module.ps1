@@ -1,4 +1,4 @@
-#*------v Function mount-Module v------
+#*------v mount-module.ps1 v------
 function mount-Module {
     <#
     .SYNOPSIS
@@ -15,6 +15,7 @@ function mount-Module {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell
     REVISIONS
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 3:42 PM 9/28/2020 fixed that trailing-$ typo again
     * 7:42 AM 9/25/2020 duped from admin-prof.ps1 -> verb-mods
     * 4:31 PM 9/24/2020 init
@@ -58,6 +59,7 @@ function mount-Module {
         [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
         [switch] $whatIf=$true
     ) ;
+    $Verbose = ($VerbosePreference -eq "Continue") ; 
     $smsg = "( processing `$Name:$($Name)`t`$BackupPath:$($BackupPath)`t`$CommandVerify:$($CommandVerify) )" ; 
     if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
     else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
@@ -68,12 +70,16 @@ function mount-Module {
     if($lVers){
         $lVers=($lVers | sort version)[-1] ;
         try {
+            # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+            if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
             import-module -name $Name -RequiredVersion $lVers.Version.tostring() -force -DisableNameChecking   
+            # reenable VerbosePreference:Continue, if set, during mod loads 
+            if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ;
         } catch {
             write-warning "*BROKEN INSTALLED MODULE*:$($Name)!" ;
             #import-module -name $tModDFile -force -DisableNameChecking   ;
             if(!$NoBackup -AND (gcm load-ModuleFT)){
-                load-ModuleFT -tModName $tModName -tModFile $tModFile -tModCmdlet $tModCmdlet ; 
+                load-ModuleFT -tModName $tModName -tModFile $tModFile -tModCmdlet $tModCmdlet -Verbose:$($verbose) ; 
             } ;
         } ;
     } elseif ($localPSRepo){
@@ -95,7 +101,11 @@ function mount-Module {
             write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
             try {
                 Install-Module @pltIMod -ErrorAction Stop ; 
+                # suppress VerbosePreference:Continue, if set, during mod loads (VERY NOISEY)
+                if($VerbosePreference = "Continue"){ $VerbosePrefPrior = $VerbosePreference ; $VerbosePreference = "SilentlyContinue" ; $verbose = ($VerbosePreference -eq "Continue") ; } ; 
                 import-module -name $Name -force -ErrorAction Stop;
+                # reenable VerbosePreference:Continue, if set, during mod loads 
+                if($VerbosePrefPrior -eq "Continue"){ $VerbosePreference = $VerbosePrefPrior ; $verbose = ($VerbosePreference -eq "Continue") ; } ;
             } catch {
                 Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
                 Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
@@ -110,5 +120,6 @@ function mount-Module {
     if($Name -eq 'verb-logging'){
         # 
     } ; 
-} 
-#*------^ END Function mount-Module ^------
+}
+
+#*------^ mount-module.ps1 ^------
