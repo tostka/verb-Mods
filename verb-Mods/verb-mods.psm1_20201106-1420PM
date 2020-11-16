@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.17.0
+  Version     : 1.0.16.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -769,3 +769,407 @@ https://docs.microsoft.com/en-us/powershell/azure/uninstall-az-ps?view=azps-1.0.
                 Write-Warning ("Could not find uninstall candidate for {0}:{1} - module may require manual uninstall" -f $_.name, $version) ;
             } ;
         } ;
+    } ;
+    $AllModules += New-Object -TypeName psobject -Property @{name = $TargetModule; version = $Version } ;
+    foreach ($module in $AllModules) {
+        Write-Host ('Uninstalling {0} version {1}...' -f $module.name, $module.version) ;
+        try {
+            Uninstall-Module -Name $module.name -RequiredVersion $module.version -Force:$Force -ErrorAction Stop -WhatIf:$WhatIf ;
+        }
+        catch {
+            Write-Host ("`t" + $_.Exception.Message) ;
+        } ;
+    } ; # loop-E
+}
+
+#*------^ Uninstall-AllModules.ps1 ^------
+
+#*------v uninstall-ModulesObsolete.ps1 v------
+function uninstall-ModulesObsolete {
+    <#
+    .SYNOPSIS
+    uninstall-ModulesObsolete - Remove old versions of Powershell modules, leaving most current - does note that later revs are published & available)
+    .NOTES
+    Version     : 1.0.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2018-03-24
+    FileName    : uninstall-ModulesObsolete.ps1
+    License     : MIT
+    Copyright   : (c) 4/7/2020 Todd Kadrie
+    Github      : https://github.com/tostka
+    Tags        : Powershell,Module,Lifecycle
+    AddedCredit : Jack Fruh
+    AddedWebsite: http://sharepointjack.com/2017/powershell-script-to-remove-duplicate-old-modules/
+    AddedTwitter: @sharepointjack / http://twitter.com/sharepointjack	
+    REVISIONS
+    * 12:38 PM 8/7/2020 added -scope vari, and test for local\Administrators (when running AllUsers scope uninstalls), fixed comparison typo #78
+    * 1:03 PM 8/5/2020, rewrote & expanded orig concept as func, added to verb-Mods
+    .DESCRIPTION
+    uninstall-ModulesObsolete - Remove old versions of Powershell modules, leaving most current - does note that later revs are published & available)
+    Inspired by original concept posted at Jack Fruh's blog.
+    .PARAMETER Modules
+    Specific Module(s) to be processed[-Modules array-of-module-descrptors]
+    .PARAMETER Repository
+    Source Repository, for which *all* associated local installed modules should be processed[-Repository 'repo1','repo2']
+    .PARAMETER Scope
+    Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]
+    .PARAMETER whatIf
+    Whatif Flag  [-whatIf]
+    .EXAMPLE
+    uninstall-ModulesObsolete -scope AllUsers -verbose -whatif ;
+    Run a whatif pass at uninstalling all obsolete module version in the AllUsers scope
+    .EXAMPLE
+    uninstall-ModulesObsolete -verbose -whatif ;
+    Run a whatif pass at uninstalling all obsolete module version
+    .EXAMPLE
+    uninstall-ModulesObsolete -Modules "AzureAD","verb-exo" -verbose -whatif ;
+    Run a whatif pass on explicit module descriptors, uninstalling all obsolete module versions
+    .EXAMPLE
+    uninstall-ModulesObsolete -Repository "repo1" -verbose -whatif ;
+    Run a whatif pass on uninstalling all obsolete module versions sourced in a specific Repository
+    .LINK
+    https://github.com/tostka
+    #>
+    #Requires -Modules verb-Auth
+    #Requires -Version 3
+    [CmdletBinding()] 
+    PARAM(
+        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of specific Module(s) to be processed[-Modules 'mod1','mod2']")]
+        [Alias('Name')]$Modules,
+        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Source Repository, for which *all* associated local installed modules should be processed (should match Repository property of module, as returned by Get-InstalledModule cmdlet)[-Repository 'Repo1']")]
+        [array]$Repository,
+        [Parameter(HelpMessage="Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]")]
+        [ValidateSet("AllUsers","CurrentUser")]
+        [array]$Scope,
+        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
+        [switch]$whatIf
+    ) ;
+    BEGIN {
+        $verbose = ($VerbosePreference -eq "Continue") ; 
+        # construct dynamic scope regex's (accomodates profile redirection and system variant progfiles locations)
+        # AllUsers scope
+        [regex]$rgxModsAllUsersScope="^$([regex]::escape([environment]::getfolderpath('ProgramFiles')))\\((Windows)*)PowerShell\\Modules" ;
+        # CurrUser scope
+        [regex]$rgxModsCurrUserScope="^$([regex]::escape([environment]::getfolderpath('Mydocuments')))\\((Windows)*)PowerShell\\Modules" ;
+    } ;
+    PROCESS {
+        if(!$Modules){
+            $smsg = "Gathering all installed modules..." ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            $tModules = get-installedmodule ;
+        } else { 
+            $smsg = "$(($Modules|measure).count) specific Modules specified`n$(($Modules|out-string).trim())" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            $tModules = ($modules | %{get-installedmodule $_ | write-output } ) ;
+        } ; 
+        if($Repository){
+            $tModules = $tModules|?{$_.Repository -eq $Repository} ; 
+        } ; 
+        if($Scope){
+            switch ($Scope){
+                "AllUsers" {
+                    $smsg = "(-scope AllUsers specified, filtering...)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope} ;
+                } 
+                "CurrentUser" {
+                    $smsg = "(-scope CurrentUser specified, filtering...)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsCurrUserScope} 
+                } 
+                "default" {
+                    $smsg = "(no scope specified, all modules from AllUsers and $($env:USERNAME)'s profile will be targeted)" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                } 
+            } ; 
+        } ; 
+        $ttl=($tModules|Measure-Object).count ;
+        $Procd=0 ; 
+        $smsg = "($(($tModules|measure).count) modules returned)" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+        if($AllUMods = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope}){
+            if (-not(Test-IsLocalAdmin)){
+                $smsg = "Some modules targeted are in the *AllUsers* context (within ProgramFiles)...`n$(($AllUMods|ft -a InstalledLocation|out-string).trim())`nInstallation/Uninstallation from that context *requires* local\Administrator permissions, which are not currently available under $($env:USERDOMAIN)\$($env:USERNAME). EXITING!" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error } #Error|Warn|Debug 
+                else{ write-warning -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                throw "AllUsers Modules targeted, non-local\Administrator permisisons present." ; 
+                break ; 
+            } ; 
+        } else { 
+            $smsg = "(no modules from AllUsers scope are targeted)" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        } ; 
+
+        foreach ($Module in $tModules) {
+            $Procd++ ;
+            $sBnr="#*======v ($($Procd)/$($ttl)):PROCESSING:$($Module.name) v======" ; 
+            $smsg=$sBnr ;
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            get-module $Module.name | Remove-Module -WhatIf:$($whatif) ; 
+            $ModRevLatest = get-installedmodule $Module.name ; 
+            $ModVersions = get-installedmodule $Module.name -allversions ;
+            if(($ModVersions|measure).count -gt 1){
+                $smsg="$(($ModVersions|measure).count) versions of this module found [ $($Module.name) ]" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+                foreach ($ModVers in ($ModVersions|?{$_.version -ne $ModRevLatest.version})) {
+                    $sBnrS="`n#*------v VERS: $($ModVers.version): v------" ; 
+                    $smsg=$sBnrS ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    if ($ModVers.version -ne $ModRevLatest.version){
+                        $smsg="--Uninstalling $($ModVers.name) v:$($ModVers.version) [leaving v:$($ModRevLatest.version)]" ;
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                        
+                        $error.clear() ;
+                        TRY {
+                            $ModVers | uninstall-module -force -whatif:$($whatif) ;
+                        } CATCH {
+                            $ErrTrapd=$Error[0] ;
+                            $smsg= "Failed to exec cmd because: $($ErrTrapd)" ;
+                            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error} ; #Error|Warn
+                            Continue ;#Continue/Exit/Stop
+                        } ; 
+                    } ;
+                    $smsg = "$($sBnrS.replace('-v','-^').replace('v-','^-'))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                } ; # loop-E
+            } else {
+                $smsg="(Only a single version found $($Module.name), skipping)" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            }; 
+            $smsg = "$($sBnr.replace('=v','=^').replace('v=','^='))" ;
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        } ; # loop-E
+        $smsg = "PASS COMPLETED" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+    } ; 
+    END{ } ;
+}
+
+#*------^ uninstall-ModulesObsolete.ps1 ^------
+
+#*------v update-PSPowerShellGetLegacy.ps1 v------
+Function update-PSPowerShellGetLegacy {
+    <#
+    .SYNOPSIS
+    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     :	http://www.toddomation.com
+    Twitter     :	@tostka / http://twitter.com/tostka
+    CreatedDate : 2020-11-05
+    FileName    : update-PSPowerShellGetLegacy.ps1
+    License     : MIT License
+    Copyright   : (c) 2020 Todd Kadrie
+    Github      : https://github.com/tostka/verb-XXX
+    Tags        : Powershell,Module,PowershellGet,Legacy
+    REVISIONS
+    * 10:37 AM 11/5/2020 init
+    .DESCRIPTION
+    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
+    Script must be run from a Ps5+ machine, with it's native PowerShellGet support, 
+    to prepare and publish PSG-supporting current modules for legacy Psv3/Psv4 systems 
+    The Script requires a local global $localPSRepoPath pointed at the parent directory, 
+    above the local PSRepository.SourceLocation ((Get-PSRepository REPONAME).ScriptPublishLocation)
+
+    The script Save-Modules's the latest PowershellGet to a new Temp directory, 
+    locates the PowerShellGet & PackageManagement submodule current version n.n.n 
+    folders, and copies them to below a new "$localPSRepoPath\PSGetStatic" shared 
+    directory (below the parent dir of the local PSRepo dir ScriptPublishLocation).
+
+    The static PowershellGet content can then be manually copied from that location 
+    to the normal $env:psmodulepath "Module"-storage locations on Psv3/Psv4 
+    machines that require functional PowerShellGet, to leverage modern PSRepo use. 
+    .PARAMETER  PARAMNAME
+
+    .PARAMETER  PARAMNAME
+
+    .PARAMETER ShowDebug
+    Parameter to display Debugging messages [-ShowDebug switch]
+    .PARAMETER Whatif
+    Parameter to run a Test no-change pass [-Whatif switch]
+    .EXAMPLE
+    .\update-PSPowerShellGetLegacy.ps1
+    .EXAMPLE
+    .\update-PSPowerShellGetLegacy.ps1
+    .LINK
+    https://github.com/tostka/verb-Module
+    #>
+    #Requires -Version 5
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    [CmdletBinding()]
+    PARAM(
+        #[Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="HELPMSG[-PARAM SAMPLEINPUT]")]
+        #[ValidateNotNullOrEmpty()]
+        #[Alias('ALIAS1', 'ALIAS2')]
+        #$PARAM,
+        [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
+        [switch] $showDebug,
+        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
+        [switch] $whatIf
+    ) ;
+    BEGIN { 
+        $Verbose = ($VerbosePreference -eq 'Continue') ; 
+    } ;  # BEGIN-E
+    PROCESS {
+        $error.clear() ;
+        TRY {
+            # 1 fr box w psg installed, use save-module to pull down a copy
+            $tDir = join-path -path ([System.IO.Path]::GetTempPath()) -child 'PowerShellGet\' ; 
+            if(!(test-path $tDir -ea 0)){
+                write-verbose "Creating tmpdir: $($tDir)" ; 
+                mkdir -path $tDir -force ; 
+            } else {
+                # purge existing vers
+                $subs = $null ; 
+                $subs = gci $tdir -Directory -ea 0;
+                if($subs.count){
+                    write-verbose "Purging existing subfolders" ; 
+                    foreach($sub in $subs){
+                        $pltRD=@{ path=$sub.fullname ; Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
+                        write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):remove-item w`n$(($pltRD|out-string).trim())" ; 
+                        #remove-item -path $sub.fullname -Recurse -force #-whatif
+                        remove-item @pltRD ; 
+                    } ; 
+                } ; 
+            } ;  
+            # get latest version
+            $pltSM=@{ Name='PowerShellGet' ;Path=$tDir ;Repository='PSGallery' ;whatif=$($whatif)} ; 
+            write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):Save-Module w`n$(($pltSM|out-string).trim())" ; 
+            Save-Module @pltSM ; 
+            if(!$whatif){
+                [array]$thisVers=$null ; 
+                $sdirs = gci $tdir\ -recur -Directory |?{$_.name -match '\d*\.\d*\.\d*((\.\d*)*)'} | select -expand fullname ; 
+                # parent it, and use \\REPOSERVER\REPOSHARE\PSGetStatic
+                $repopathPSG = join-path -path (split-path $localPSRepoPath) -child PSGetStatic ; 
+                if(!(test-path $repopathPSG)){
+                    write-verbose "Creating `$repopathPSG: $($repopathPSG)" ; 
+                    mkdir -path $repopathPSG -force ; 
+                } else {
+                    # purge all existing vers
+                    $subs = $null ; 
+                    $subs = gci $repopathPSG -Directory -ea 0;
+                    if($subs.count){
+                        write-verbose "Purging existing subfolders" ; 
+                        foreach($sub in $subs){
+                            $pltRD=@{ path=$sub.fullname ; Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
+                            write-verbose "remove-item w`n$(($pltRD|out-string).trim())" ; 
+                            remove-item @pltRD ; 
+                        } ; 
+                    } ; 
+                } ; 
+                foreach($sdir in $sdirs){
+                    $psgMName = (split-path $sdir).tostring().split('\')[-1] ; 
+                    $destpath = "$($repopathPSG)\$($psgMName)\" ; 
+                    if(!(test-path $destpath)){
+                        write-verbose "Creating $($destpath)" ; 
+                        mkdir -path $destpath -force ; 
+                    } ; 
+                    $pltCI = @{
+                        #path = "$sdir\*";
+                        path = $sdir;
+                        destination = $destpath ; 
+                        Recurse = $true ; 
+                        whatif=$($whatif) ;
+                    } ; 
+                    #copy-item -Path "$sdir\*" -Destination $destpath -whatif
+                    write-verbose "copy-item w`n$(($pltCI|out-string).trim())" ; 
+                    copy-item @pltCI ; 
+                    if($verbose){
+                        gci -path $pltCI.destination -Recurse ; 
+                    } ; 
+                    $pltCI.path -match '\d*\.\d*\.\d*((\.\d*)*)'
+                    if($matches){
+                        $thisVers += $matches[0] ; 
+                    } ; 
+                } ; 
+                # cleanup the temp
+                $pltRD=@{ 
+                path=$tdir.substring(0,$tdir.length-1) ; # trim the trailing \ off to purge the dir itself as well
+                Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
+                write-verbose "CLEANUP:remove-item w`n$(($pltRD|out-string).trim())" ; 
+                remove-item @pltRD ; 
+            } else { 
+                write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):(`-whatif:skipping balance of process)" ; 
+            } ; 
+        } CATCH {
+            Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
+            Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+        } ; 
+    } ;  # PROC-E
+    END {
+        $hMsg=@"
+The $($mods -join ' & ') manual 'legacy' modules have been updated to version $($thisvers -join ' & ') respectively
+and both were copied to the...
+
+$($repopathPSG)
+
+...shared Repo parent directory.
+
+To Install this module, and add *legacy* PowershellGet support to Psv3 & Psv4 machines:
+
+1) copy the install-PSPowerShellGetLegacy.ps1 script locally to the target server
+2) run the following to perform an install from the shared repo location:
+
+[cd to the directory where the .ps1 has been stored - commonly c:\scripts]
+install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
+
+The trailing -whatif parameter above runs a *test* pass, no changes. 
+Remove the -whatif to run a full execution & install. 
+"@ ; 
+        write-host -foregroundcolor green $hMsg ; 
+
+    } ;  # END-E
+}
+
+#*------^ update-PSPowerShellGetLegacy.ps1 ^------
+
+#*======^ END FUNCTIONS ^======
+
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+
+
+# SIG # Begin signature block
+# MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
+# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU79+/+4GKHQyNQJ6OpstWMUjK
+# eiagggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
+# Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
+# ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
+# a+NnFYNRPPa8Bnm071ohGe27jNWKPVUbDfd0OY2sqCBQCEFVb5pqcIECRRnlhN5H
+# +EEJmm2x9AU0uS7IHxHeUo8fkW4vm49adkat5gAoOZOwbuNntBOAJy9LCyNs4F1I
+# KKphP3TyDwe8XqsEVwB2m9FPAgMBAAGjdjB0MBMGA1UdJQQMMAoGCCsGAQUFBwMD
+# MF0GA1UdAQRWMFSAEL95r+Rh65kgqZl+tgchMuKhLjAsMSowKAYDVQQDEyFQb3dl
+# clNoZWxsIExvY2FsIENlcnRpZmljYXRlIFJvb3SCEGwiXbeZNci7Rxiz/r43gVsw
+# CQYFKw4DAh0FAAOBgQB6ECSnXHUs7/bCr6Z556K6IDJNWsccjcV89fHA/zKMX0w0
+# 6NefCtxas/QHUA9mS87HRHLzKjFqweA3BnQ5lr5mPDlho8U90Nvtpj58G9I5SPUg
+# CspNr5jEHOL5EdJFBIv3zI2jQ8TPbFGC0Cz72+4oYzSxWpftNX41MmEsZkMaADGC
+# AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
+# Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
+# AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSi9wqC
+# gG80w6Ce576y3dwcTwrJLDANBgkqhkiG9w0BAQEFAASBgHxd8NmMIuSEyleB8OcA
+# oU7eka5Fsuv5pTOE3MgoPTLlqpLiBXtmiB1fRKhUjm+xe5WSFKQiCSOuzKH4ofjB
+# QlNr0GZCgxjwhlQQ6ITpePA/VzYmROF76XRvhRNUOz+feVheF0MyHzB8XB76l3ut
+# VuTBoS4lXLIZiqbJUSlCDmJk
+# SIG # End signature block
