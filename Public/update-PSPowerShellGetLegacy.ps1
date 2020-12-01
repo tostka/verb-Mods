@@ -15,9 +15,11 @@ Function update-PSPowerShellGetLegacy {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell,Module,PowershellGet,Legacy
     REVISIONS
+    * 4:14 PM 12/1/2020 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
     * 10:37 AM 11/5/2020 init
     .DESCRIPTION
-    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)    Script must be run from a Ps5+ machine, with it's native PowerShellGet support, 
+    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
+    Script must be run from a Ps5+ machine, with it's native PowerShellGet support, 
     to prepare and publish PSG-supporting current modules for legacy Psv3/Psv4 systems 
     The Script requires a local global $localPSRepoPath pointed at the parent directory, 
     above the local PSRepository.SourceLocation ((Get-PSRepository REPONAME).ScriptPublishLocation)
@@ -30,29 +32,24 @@ Function update-PSPowerShellGetLegacy {
     The static PowershellGet content can then be manually copied from that location 
     to the normal $env:psmodulepath "Module"-storage locations on Psv3/Psv4 
     machines that require functional PowerShellGet, to leverage modern PSRepo use. 
-    .PARAMETER  PARAMNAME
-
-    .PARAMETER  PARAMNAME
-
     .PARAMETER ShowDebug
     Parameter to display Debugging messages [-ShowDebug switch]
     .PARAMETER Whatif
     Parameter to run a Test no-change pass [-Whatif switch]
     .EXAMPLE
-    .\update-PSPowerShellGetLegacy.ps1
+    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
+    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Users') -force -whatif ; 
+    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *CurrentUser* Modules directory.
     .EXAMPLE
-    .\update-PSPowerShellGetLegacy.ps1
+    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
+    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Program\sFiles\\WindowsPowerShell') -force -whatif ; 
+    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *AllUsers* Modules directory.
     .LINK
     https://github.com/tostka/verb-Module
     #>
-    #Requires -Version 5
-    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    # Requires -Version 5 # can't use version in child ps1's:the monolithic .psm1 can only have *one* instance of #requires -version, in the entire module! shift to testing $host.version.major inline
     [CmdletBinding()]
     PARAM(
-        #[Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="HELPMSG[-PARAM SAMPLEINPUT]")]
-        #[ValidateNotNullOrEmpty()]
-        #[Alias('ALIAS1', 'ALIAS2')]
-        #$PARAM,
         [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
         [switch] $showDebug,
         [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
@@ -60,6 +57,9 @@ Function update-PSPowerShellGetLegacy {
     ) ;
     BEGIN { 
         $Verbose = ($VerbosePreference -eq 'Continue') ; 
+        if($host.version.major -ne 5){
+            throw "This script must be run on Powershell v5 (for full PSGet support)!" ; 
+        } ; 
     } ;  # BEGIN-E
     PROCESS {
         $error.clear() ;

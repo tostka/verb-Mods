@@ -84,18 +84,10 @@ function mount-Module {
         } ;
     } elseif ($localPSRepo){
         # if fails, no local module installed:check/register repo, find/install missing module, then load
-        if(!($localRepo = Get-PSRepository -Name $localPSRepo)){
-                $pltRepo = @{Name = $localRepo ;SourceLocation = $localPSRepoPath; PublishLocation = $localPSRepoPath ;InstallationPolicy = 'Trusted' ;} ;
-                if (Test-Path $pltRepo.SourceLocation){
-                    Register-PSRepository @pltRepo  ;
-                    write-host -foregroundcolor yellow "FIX MISSING:Register-PSRepository w`n$(($pltRepo|out-string).trim())" ; 
-                    $localRepo = Get-PSRepository $pltRepo.name ;
-                } else {throw "Repository $pltRepo.SourceLocation is offline" }  ;
-        } ; 
-        if($localRepo){
-            $pltIMod =@{ Name = $Name ; scope = $null}
+        if($RegisteredRepo = register-localPSRepository ){
+            $pltIMod =@{ Name = $Name ; scope = $null ; Repository = $RegisteredRepo.name}
             switch -regex ($env:COMPUTERNAME){
-                $MyBoxW { $pltIMod.scope = 'CurrentUser' }
+                $rgxMyBoxW { $pltIMod.scope = 'CurrentUser' }
                 default { $pltIMod.scope = 'AllUsers' }
             }
             write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
@@ -110,9 +102,10 @@ function mount-Module {
                 Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
                 Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
             }  ; 
+
         } else { 
-            throw "Unable to find/register local repostitory source:$($localPSRepo)" 
-        } ; 
+            throw "Unable to find/register local repostitory source:failed register:$($localPSRepo)" 
+        } ;
     } ;
     if(!(get-command $CommandVerify)){
         write-warning -verbose:$true  "UNABLE TO VALIDATE PRESENCE OF $CommandVerify!" ;

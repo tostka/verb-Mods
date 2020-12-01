@@ -1,3 +1,4 @@
+#*------v Function check-ReqMods v------
 function check-ReqMods {
     <#
     .SYNOPSIS
@@ -14,6 +15,7 @@ function check-ReqMods {
     Github      : https://github.com/tostka
     Tags        : Powershell,Module,Utility
     REVISIONS
+    * 8:01 AM 12/1/2020 added missing function banners
     * 1:11 PM 4/7/2020 orig vers undoc'd - sometime in last 2-3yrs, init with CBH
     .DESCRIPTION
     check-ReqMods() - Verifies that specified commands exist in function: (are loaded) or get-command (registered via installed .psd modules)
@@ -46,3 +48,4 @@ function check-ReqMods {
     } ;
     write-output $bValidMods ;
 }
+#*------^ END Function check-ReqMods ^------

@@ -1,3 +1,4 @@
+#*------v Function Disconnect-PssBroken v------
 Function Disconnect-PssBroken {
     <#
     .SYNOPSIS
@@ -29,3 +30,4 @@ Function Disconnect-PssBroken {
     #>
     Get-PsSession |Where-Object{$_.State -ne 'Opened' -or $_.Availability -ne 'Available'} | Remove-PSSession -Verbose ;
 }
+#*------^ END Function Disconnect-PssBroken ^------

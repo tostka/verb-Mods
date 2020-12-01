@@ -1,11 +1,11 @@
-# verb-mods.psm1
+﻿# verb-mods.psm1
 
 
   <#
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.20.0
+  Version     : 1.0.17.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -49,7 +49,6 @@ function check-ReqMods {
     Github      : https://github.com/tostka
     Tags        : Powershell,Module,Utility
     REVISIONS
-    * 8:01 AM 12/1/2020 added missing function banners
     * 1:11 PM 4/7/2020 orig vers undoc'd - sometime in last 2-3yrs, init with CBH
     .DESCRIPTION
     check-ReqMods() - Verifies that specified commands exist in function: (are loaded) or get-command (registered via installed .psd modules)
@@ -121,46 +120,13 @@ Function Disconnect-PssBroken {
 #*------^ Disconnect-PssBroken.ps1 ^------
 
 #*------v find-profileScripts.ps1 v------
-function find-profileScripts {
-    <#
-    .SYNOPSIS
-    find-profileScripts - Reports on configured local Powershell profiles:Scope, WPS|PSCore,host,path)
-    .NOTES
-    Version     : 1.0.0
-    Author      : (un-attributed Idera post)
-    Website     : http://www.toddomation.com
-    Twitter     : @tostka / http://twitter.com/tostka
-    CreatedDate : 20201001-0900PM
-    FileName    : find-profileScripts.ps1 
-    License     : (none asserted)
-    Copyright   : (none asserted)
-    Github      : https://github.com/tostka/verb-Mods
-    Tags        : Powershell,Profile
-    AddedCredit : (un-attributed Idera post)
-    AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
-    AddedTwitter: URL
-    REVISIONS
-    * 10:16 AM 12/1/2020 cleanedup missing func decl line
-    .DESCRIPTION
-    find-profileScripts.ps1 - Reports on local Powershell profiles
-    .OUTPUTS
-    System.Object[]
-    .EXAMPLE
-    $profs = find-profileScripts
-    .LINK
-    https://github.com/tostka/verb-XXX
-    .LINK
-    https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
-    #>
-    # calculate the parent paths that can contain profile scripts
-    $Paths = @{
+$Paths = @{
         AllUser_WPS = $pshome ;
         CurrentUser_WPS = Join-Path -Path ([Environment]::GetFolderPath('MyDocuments')) -ChildPath "WindowsPowerShell" ;
         AllUser_PS = "$env:programfiles\PowerShell\*" ;
         CurrentUser_PS = Join-Path -Path ([Environment]::GetFolderPath('MyDocuments')) -ChildPath "PowerShell" ;
     } ;
     $OutObj = @() ; 
-    # process and summarize each path
     $Paths.Keys | ForEach-Object {
         $key = $_ ;
         $path = Join-Path -Path $paths[$key] -ChildPath '*profile.ps1' ;
@@ -175,8 +141,7 @@ function find-profileScripts {
             } ;
         } ;
     } ; 
-    $outObj | write-output ; 
-}
+    $outObj | write-output
 
 #*------^ find-profileScripts.ps1 ^------
 
@@ -712,10 +677,18 @@ function mount-Module {
         } ;
     } elseif ($localPSRepo){
         # if fails, no local module installed:check/register repo, find/install missing module, then load
-        if($RegisteredRepo = register-localPSRepository ){
-            $pltIMod =@{ Name = $Name ; scope = $null ; Repository = $RegisteredRepo.name}
+        if(!($localRepo = Get-PSRepository -Name $localPSRepo)){
+                $pltRepo = @{Name = $localRepo ;SourceLocation = $localPSRepoPath; PublishLocation = $localPSRepoPath ;InstallationPolicy = 'Trusted' ;} ;
+                if (Test-Path $pltRepo.SourceLocation){
+                    Register-PSRepository @pltRepo  ;
+                    write-host -foregroundcolor yellow "FIX MISSING:Register-PSRepository w`n$(($pltRepo|out-string).trim())" ; 
+                    $localRepo = Get-PSRepository $pltRepo.name ;
+                } else {throw "Repository $pltRepo.SourceLocation is offline" }  ;
+        } ; 
+        if($localRepo){
+            $pltIMod =@{ Name = $Name ; scope = $null}
             switch -regex ($env:COMPUTERNAME){
-                $rgxMyBoxW { $pltIMod.scope = 'CurrentUser' }
+                $MyBoxW { $pltIMod.scope = 'CurrentUser' }
                 default { $pltIMod.scope = 'AllUsers' }
             }
             write-host -foregroundcolor yellow "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
@@ -730,10 +703,9 @@ function mount-Module {
                 Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
                 Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
             }  ; 
-
         } else { 
-            throw "Unable to find/register local repostitory source:failed register:$($localPSRepo)" 
-        } ;
+            throw "Unable to find/register local repostitory source:$($localPSRepo)" 
+        } ; 
     } ;
     if(!(get-command $CommandVerify)){
         write-warning -verbose:$true  "UNABLE TO VALIDATE PRESENCE OF $CommandVerify!" ;
@@ -744,95 +716,6 @@ function mount-Module {
 }
 
 #*------^ mount-module.ps1 ^------
-
-#*------v register-localPSRepository.ps1 v------
-function register-localPSRepository {
-    <#
-    .SYNOPSIS
-    register-localPSRepository.ps1 - Confirms, or manually-registers, local PSRepository, as specified by profile $localPSRepo variable. 
-    .NOTES
-    Version     : 1.0.0
-    Author      : Todd Kadrie
-    Website     : http://www.toddomation.com
-    Twitter     : @tostka / http://twitter.com/tostka
-    CreatedDate : 2020-12-01
-    FileName    : register-localPSRepository.ps1
-    License     : MIT License
-    Copyright   : (c) 2020 Todd Kadrie
-    Github      : https://github.com/tostka/verb-Mods
-    Tags        : Powershell
-    REVISIONS
-    * 8:36 AM 12/1/2020 init
-    .DESCRIPTION
-    register-localPSRepository.ps1 - Confirms, or manually-registers, local PSRepository, as specified by profile $localPSRepo variable. 
-    .PARAMETER  Repository
-    Local Repository name (defaults to profile $localRepo value)[-Repository someRepo]
-    .PARAMETER ShowDebug
-    Parameter to display Debugging messages [-ShowDebug switch]
-    .PARAMETER Whatif
-    Parameter to run a Test no-change pass [-Whatif switch]
-    .INPUTS
-    None. Does not accepted piped input.
-    .OUTPUTS
-    None. Returns no objects or output
-    System.Boolean
-    [| get-member the output to see what .NET obj TypeName is returned, to use here]
-    .EXAMPLE
-    register-localPSRepository ;
-    Default pass - confirms or manaually registers default local Repository (as specified in profile $localPSRepo value)
-    .LINK
-    https://github.com/tostka/verb-XXX
-    #>
-    [CmdletBinding()]
-    PARAM(
-        [Parameter(Position=0,Mandatory=$false,HelpMessage="local Repository name (defaults to profile `$localRepo value)[-Repository someRepo]")]
-        [string] $Repository=$localPSRepo,
-        [Parameter(Position=0,Mandatory=$false,HelpMessage="local Repository path (defaults to profile `$localPSRepoPath value)[-RepositoryPath \\server\path_to\ModulesAndScripts]")]
-        [ValidateScript({Test-Path $_ -PathType 'Container'})]
-        [string] $RepositoryPath=$localPSRepoPath,
-        [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
-        [switch] $showDebug,
-        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
-        [switch] $whatIf=$true
-    ) ;
-    BEGIN {
-        $Verbose = ($VerbosePreference -eq "Continue") ; 
-        $smsg = "Confirming registration of $($Repository) PSRepository" ; 
-        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
-    } 
-    PROCESS {
-        if ($Repository -AND $RepositoryPath){
-            if(!($registeredRepo = Get-PSRepository -Name $Repository)){
-                $pltRepo = @{Name = $Repository ;SourceLocation = $RepositoryPath; PublishLocation = $RepositoryPath ;InstallationPolicy = 'Trusted' ;} ;
-                if (Test-Path $pltRepo.SourceLocation){
-                    $error.clear() ;
-                    TRY {
-                        write-host -foregroundcolor yellow "FIXING MISSING:Register-PSRepository w`n$(($pltRepo|out-string).trim())" ; 
-                        Register-PSRepository @pltRepo ; 
-                        $registeredRepo = Get-PSRepository -Name $pltRepo.name  ; 
-                    } CATCH {
-                        Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
-                        BREAK ; 
-                    } ; 
-                } else {throw "Repository $pltRepo.SourceLocation is offline" }  ;
-            } else {
-                #write-verbose "$((get-date).ToString('HH:mm:ss')):repo registered w`n$(($registeredRepo| ft -a name,installationpolicy,sourcelocation|out-string).trim())" ; 
-                #$registeredRepo | write-output ;
-            } ;  
-
-        } else { 
-            throw "Missing -Repository and/or -RepositoryPath for registration!`n(or source `$localPSRepo & `$localPSRepoPath are not configured in profile)"  ; 
-        } ; 
-    } ; 
-    END {
-        if($registeredRepo){
-            $registeredRepo | write-output ;
-        } else { $false | write-output } ; 
-    } ; 
-}
-
-#*------^ register-localPSRepository.ps1 ^------
 
 #*------v Uninstall-AllModules.ps1 v------
 function Uninstall-AllModules {
@@ -886,380 +769,3 @@ https://docs.microsoft.com/en-us/powershell/azure/uninstall-az-ps?view=azps-1.0.
                 Write-Warning ("Could not find uninstall candidate for {0}:{1} - module may require manual uninstall" -f $_.name, $version) ;
             } ;
         } ;
-    } ;
-    $AllModules += New-Object -TypeName psobject -Property @{name = $TargetModule; version = $Version } ;
-    foreach ($module in $AllModules) {
-        Write-Host ('Uninstalling {0} version {1}...' -f $module.name, $module.version) ;
-        try {
-            Uninstall-Module -Name $module.name -RequiredVersion $module.version -Force:$Force -ErrorAction Stop -WhatIf:$WhatIf ;
-        }
-        catch {
-            Write-Host ("`t" + $_.Exception.Message) ;
-        } ;
-    } ; # loop-E
-}
-
-#*------^ Uninstall-AllModules.ps1 ^------
-
-#*------v uninstall-ModulesObsolete.ps1 v------
-function uninstall-ModulesObsolete {
-    <#
-    .SYNOPSIS
-    uninstall-ModulesObsolete - Remove old versions of Powershell modules, leaving most current - does note that later revs are published & available)
-    .NOTES
-    Version     : 1.0.0.0
-    Author      : Todd Kadrie
-    Website     : http://www.toddomation.com
-    Twitter     : @tostka / http://twitter.com/tostka
-    CreatedDate : 2018-03-24
-    FileName    : uninstall-ModulesObsolete.ps1
-    License     : MIT
-    Copyright   : (c) 4/7/2020 Todd Kadrie
-    Github      : https://github.com/tostka
-    Tags        : Powershell,Module,Lifecycle
-    AddedCredit : Jack Fruh
-    AddedWebsite: http://sharepointjack.com/2017/powershell-script-to-remove-duplicate-old-modules/
-    AddedTwitter: @sharepointjack / http://twitter.com/sharepointjack	
-    REVISIONS
-    * 12:38 PM 8/7/2020 added -scope vari, and test for local\Administrators (when running AllUsers scope uninstalls), fixed comparison typo #78
-    * 1:03 PM 8/5/2020, rewrote & expanded orig concept as func, added to verb-Mods
-    .DESCRIPTION
-    uninstall-ModulesObsolete - Remove old versions of Powershell modules, leaving most current - does note that later revs are published & available)
-    Inspired by original concept posted at Jack Fruh's blog.
-    .PARAMETER Modules
-    Specific Module(s) to be processed[-Modules array-of-module-descrptors]
-    .PARAMETER Repository
-    Source Repository, for which *all* associated local installed modules should be processed[-Repository 'repo1','repo2']
-    .PARAMETER Scope
-    Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]
-    .PARAMETER whatIf
-    Whatif Flag  [-whatIf]
-    .EXAMPLE
-    uninstall-ModulesObsolete -scope AllUsers -verbose -whatif ;
-    Run a whatif pass at uninstalling all obsolete module version in the AllUsers scope
-    .EXAMPLE
-    uninstall-ModulesObsolete -verbose -whatif ;
-    Run a whatif pass at uninstalling all obsolete module version
-    .EXAMPLE
-    uninstall-ModulesObsolete -Modules "AzureAD","verb-exo" -verbose -whatif ;
-    Run a whatif pass on explicit module descriptors, uninstalling all obsolete module versions
-    .EXAMPLE
-    uninstall-ModulesObsolete -Repository "repo1" -verbose -whatif ;
-    Run a whatif pass on uninstalling all obsolete module versions sourced in a specific Repository
-    .LINK
-    https://github.com/tostka
-    #>
-    #Requires -Modules verb-Auth
-    #Requires -Version 3
-    [CmdletBinding()] 
-    PARAM(
-        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of specific Module(s) to be processed[-Modules 'mod1','mod2']")]
-        [Alias('Name')]$Modules,
-        [Parameter(Position=0,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Source Repository, for which *all* associated local installed modules should be processed (should match Repository property of module, as returned by Get-InstalledModule cmdlet)[-Repository 'Repo1']")]
-        [array]$Repository,
-        [Parameter(HelpMessage="Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]")]
-        [ValidateSet("AllUsers","CurrentUser")]
-        [array]$Scope,
-        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
-        [switch]$whatIf
-    ) ;
-    BEGIN {
-        $verbose = ($VerbosePreference -eq "Continue") ; 
-        # construct dynamic scope regex's (accomodates profile redirection and system variant progfiles locations)
-        # AllUsers scope
-        [regex]$rgxModsAllUsersScope="^$([regex]::escape([environment]::getfolderpath('ProgramFiles')))\\((Windows)*)PowerShell\\Modules" ;
-        # CurrUser scope
-        [regex]$rgxModsCurrUserScope="^$([regex]::escape([environment]::getfolderpath('Mydocuments')))\\((Windows)*)PowerShell\\Modules" ;
-    } ;
-    PROCESS {
-        if(!$Modules){
-            $smsg = "Gathering all installed modules..." ; 
-            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-            $tModules = get-installedmodule ;
-        } else { 
-            $smsg = "$(($Modules|measure).count) specific Modules specified`n$(($Modules|out-string).trim())" ; 
-            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-            $tModules = ($modules | %{get-installedmodule $_ | write-output } ) ;
-        } ; 
-        if($Repository){
-            $tModules = $tModules|?{$_.Repository -eq $Repository} ; 
-        } ; 
-        if($Scope){
-            switch ($Scope){
-                "AllUsers" {
-                    $smsg = "(-scope AllUsers specified, filtering...)" ; 
-                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope} ;
-                } 
-                "CurrentUser" {
-                    $smsg = "(-scope CurrentUser specified, filtering...)" ; 
-                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                    $tModules = $tModules |?{$_.installedlocation -match $rgxModsCurrUserScope} 
-                } 
-                "default" {
-                    $smsg = "(no scope specified, all modules from AllUsers and $($env:USERNAME)'s profile will be targeted)" ; 
-                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                } 
-            } ; 
-        } ; 
-        $ttl=($tModules|Measure-Object).count ;
-        $Procd=0 ; 
-        $smsg = "($(($tModules|measure).count) modules returned)" ; 
-        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-
-        if($AllUMods = $tModules |?{$_.installedlocation -match $rgxModsAllUsersScope}){
-            if (-not(Test-IsLocalAdmin)){
-                $smsg = "Some modules targeted are in the *AllUsers* context (within ProgramFiles)...`n$(($AllUMods|ft -a InstalledLocation|out-string).trim())`nInstallation/Uninstallation from that context *requires* local\Administrator permissions, which are not currently available under $($env:USERDOMAIN)\$($env:USERNAME). EXITING!" ; 
-                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error } #Error|Warn|Debug 
-                else{ write-warning -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                throw "AllUsers Modules targeted, non-local\Administrator permisisons present." ; 
-                break ; 
-            } ; 
-        } else { 
-            $smsg = "(no modules from AllUsers scope are targeted)" ; 
-            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-        } ; 
-
-        foreach ($Module in $tModules) {
-            $Procd++ ;
-            $sBnr="#*======v ($($Procd)/$($ttl)):PROCESSING:$($Module.name) v======" ; 
-            $smsg=$sBnr ;
-            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-            get-module $Module.name | Remove-Module -WhatIf:$($whatif) ; 
-            $ModRevLatest = get-installedmodule $Module.name ; 
-            $ModVersions = get-installedmodule $Module.name -allversions ;
-            if(($ModVersions|measure).count -gt 1){
-                $smsg="$(($ModVersions|measure).count) versions of this module found [ $($Module.name) ]" ;
-                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-
-                foreach ($ModVers in ($ModVersions|?{$_.version -ne $ModRevLatest.version})) {
-                    $sBnrS="`n#*------v VERS: $($ModVers.version): v------" ; 
-                    $smsg=$sBnrS ;
-                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                    if ($ModVers.version -ne $ModRevLatest.version){
-                        $smsg="--Uninstalling $($ModVers.name) v:$($ModVers.version) [leaving v:$($ModRevLatest.version)]" ;
-                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                        
-                        $error.clear() ;
-                        TRY {
-                            $ModVers | uninstall-module -force -whatif:$($whatif) ;
-                        } CATCH {
-                            $ErrTrapd=$Error[0] ;
-                            $smsg= "Failed to exec cmd because: $($ErrTrapd)" ;
-                            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error} ; #Error|Warn
-                            Continue ;#Continue/Exit/Stop
-                        } ; 
-                    } ;
-                    $smsg = "$($sBnrS.replace('-v','-^').replace('v-','^-'))" ;
-                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                } ; # loop-E
-            } else {
-                $smsg="(Only a single version found $($Module.name), skipping)" ;
-                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-            }; 
-            $smsg = "$($sBnr.replace('=v','=^').replace('v=','^='))" ;
-            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-        } ; # loop-E
-        $smsg = "PASS COMPLETED" ; 
-        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-    } ; 
-    END{ } ;
-}
-
-#*------^ uninstall-ModulesObsolete.ps1 ^------
-
-#*------v update-PSPowerShellGetLegacy.ps1 v------
-Function update-PSPowerShellGetLegacy {
-    <#
-    .SYNOPSIS
-    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
-    .NOTES
-    Version     : 1.0.0
-    Author      : Todd Kadrie
-    Website     :	http://www.toddomation.com
-    Twitter     :	@tostka / http://twitter.com/tostka
-    CreatedDate : 2020-11-05
-    FileName    : update-PSPowerShellGetLegacy.ps1
-    License     : MIT License
-    Copyright   : (c) 2020 Todd Kadrie
-    Github      : https://github.com/tostka/verb-XXX
-    Tags        : Powershell,Module,PowershellGet,Legacy
-    REVISIONS
-    * 10:39 AM 12/1/2020 needs to be debugged ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
-    * 10:37 AM 11/5/2020 init
-    .DESCRIPTION
-    update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
-    Script must be run from a Ps5+ machine, with it's native PowerShellGet support, 
-    to prepare and publish PSG-supporting current modules for legacy Psv3/Psv4 systems 
-    The Script requires a local global $localPSRepoPath pointed at the parent directory, 
-    above the local PSRepository.SourceLocation ((Get-PSRepository REPONAME).ScriptPublishLocation)
-
-    The script Save-Modules's the latest PowershellGet to a new Temp directory, 
-    locates the PowerShellGet & PackageManagement submodule current version n.n.n 
-    folders, and copies them to below a new "$localPSRepoPath\PSGetStatic" shared 
-    directory (below the parent dir of the local PSRepo dir ScriptPublishLocation).
-
-    The static PowershellGet content can then be manually copied from that location 
-    to the normal $env:psmodulepath "Module"-storage locations on Psv3/Psv4 
-    machines that require functional PowerShellGet, to leverage modern PSRepo use. 
-    .PARAMETER ShowDebug
-    Parameter to display Debugging messages [-ShowDebug switch]
-    .PARAMETER Whatif
-    Parameter to run a Test no-change pass [-Whatif switch]
-    .EXAMPLE
-    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
-    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Users') -force -whatif ; 
-    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *CurrentUser* Modules directory.
-    .EXAMPLE
-    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
-    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Program\sFiles\\WindowsPowerShell') -force -whatif ; 
-    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *AllUsers* Modules directory.
-    .LINK
-    https://github.com/tostka/verb-Module
-    #>
-    # Requires -Version 5 # can't use version in child ps1's:the monolithic .psm1 can only have *one* instance of #requires -version, in the entire module! shift to testing $host.version.major inline
-    [CmdletBinding()]
-    PARAM(
-        [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
-        [switch] $showDebug,
-        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
-        [switch] $whatIf
-    ) ;
-    BEGIN { 
-        $Verbose = ($VerbosePreference -eq 'Continue') ; 
-        if($host.version.major -ne 5){
-            throw "This script must be run on Powershell v5 (for full PSGet support)!" ; 
-        } ; 
-    } ;  # BEGIN-E
-    PROCESS {
-        $error.clear() ;
-        TRY {
-            # 1 fr box w psg installed, use save-module to pull down a copy
-            $tDir = join-path -path ([System.IO.Path]::GetTempPath()) -child 'PowerShellGet\' ; 
-            if(!(test-path $tDir -ea 0)){
-                write-verbose "Creating tmpdir: $($tDir)" ; 
-                mkdir -path $tDir -force ; 
-            } else {
-                # purge existing vers
-                $subs = $null ; 
-                $subs = gci $tdir -Directory -ea 0;
-                if($subs.count){
-                    write-verbose "Purging existing subfolders" ; 
-                    foreach($sub in $subs){
-                        $pltRD=@{ path=$sub.fullname ; Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
-                        write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):remove-item w`n$(($pltRD|out-string).trim())" ; 
-                        #remove-item -path $sub.fullname -Recurse -force #-whatif
-                        remove-item @pltRD ; 
-                    } ; 
-                } ; 
-            } ;  
-            # get latest version
-            $pltSM=@{ Name='PowerShellGet' ;Path=$tDir ;Repository='PSGallery' ;whatif=$($whatif)} ; 
-            write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):Save-Module w`n$(($pltSM|out-string).trim())" ; 
-            Save-Module @pltSM ; 
-            if(!$whatif){
-                [array]$thisVers=$null ; 
-                $sdirs = gci $tdir\ -recur -Directory |?{$_.name -match '\d*\.\d*\.\d*((\.\d*)*)'} | select -expand fullname ; 
-                # parent it, and use \\REPOSERVER\REPOSHARE\PSGetStatic
-                $repopathPSG = join-path -path (split-path $localPSRepoPath) -child PSGetStatic ; 
-                if(!(test-path $repopathPSG)){
-                    write-verbose "Creating `$repopathPSG: $($repopathPSG)" ; 
-                    mkdir -path $repopathPSG -force ; 
-                } else {
-                    # purge all existing vers
-                    $subs = $null ; 
-                    $subs = gci $repopathPSG -Directory -ea 0;
-                    if($subs.count){
-                        write-verbose "Purging existing subfolders" ; 
-                        foreach($sub in $subs){
-                            $pltRD=@{ path=$sub.fullname ; Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
-                            write-verbose "remove-item w`n$(($pltRD|out-string).trim())" ; 
-                            remove-item @pltRD ; 
-                        } ; 
-                    } ; 
-                } ; 
-                foreach($sdir in $sdirs){
-                    $psgMName = (split-path $sdir).tostring().split('\')[-1] ; 
-                    $destpath = "$($repopathPSG)\$($psgMName)\" ; 
-                    if(!(test-path $destpath)){
-                        write-verbose "Creating $($destpath)" ; 
-                        mkdir -path $destpath -force ; 
-                    } ; 
-                    $pltCI = @{
-                        #path = "$sdir\*";
-                        path = $sdir;
-                        destination = $destpath ; 
-                        Recurse = $true ; 
-                        whatif=$($whatif) ;
-                    } ; 
-                    #copy-item -Path "$sdir\*" -Destination $destpath -whatif
-                    write-verbose "copy-item w`n$(($pltCI|out-string).trim())" ; 
-                    copy-item @pltCI ; 
-                    if($verbose){
-                        gci -path $pltCI.destination -Recurse ; 
-                    } ; 
-                    $pltCI.path -match '\d*\.\d*\.\d*((\.\d*)*)'
-                    if($matches){
-                        $thisVers += $matches[0] ; 
-                    } ; 
-                } ; 
-                # cleanup the temp
-                $pltRD=@{ 
-                path=$tdir.substring(0,$tdir.length-1) ; # trim the trailing \ off to purge the dir itself as well
-                Recurse=$true ; force=$true ; whatif=$($whatif) ; } ; 
-                write-verbose "CLEANUP:remove-item w`n$(($pltRD|out-string).trim())" ; 
-                remove-item @pltRD ; 
-            } else { 
-                write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):(`-whatif:skipping balance of process)" ; 
-            } ; 
-        } CATCH {
-            Write-Warning "$(get-date -format 'HH:mm:ss'): Failed processing $($_.Exception.ItemName). `nError Message: $($_.Exception.Message)`nError Details: $($_)" ;
-            Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
-        } ; 
-    } ;  # PROC-E
-    END {
-        $hMsg=@"
-The $($mods -join ' & ') manual 'legacy' modules have been updated to version $($thisvers -join ' & ') respectively
-and both were copied to the...
-
-$($repopathPSG)
-
-...shared Repo parent directory.
-
-To Install this module, and add *legacy* PowershellGet support to Psv3 & Psv4 machines:
-
-1) copy the install-PSPowerShellGetLegacy.ps1 script locally to the target server
-2) run the following to perform an install from the shared repo location:
-
-[cd to the directory where the .ps1 has been stored - commonly c:\scripts]
-install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
-
-The trailing -whatif parameter above runs a *test* pass, no changes. 
-Remove the -whatif to run a full execution & install. 
-"@ ; 
-        write-host -foregroundcolor green $hMsg ; 
-
-    } ;  # END-E
-}
-
-#*------^ update-PSPowerShellGetLegacy.ps1 ^------
-
-#*======^ END FUNCTIONS ^======
-
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
-

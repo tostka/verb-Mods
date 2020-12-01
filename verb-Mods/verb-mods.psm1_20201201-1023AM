@@ -1,11 +1,11 @@
-# verb-mods.psm1
+﻿# verb-mods.psm1
 
 
   <#
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.20.0
+  Version     : 1.0.18.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -121,46 +121,13 @@ Function Disconnect-PssBroken {
 #*------^ Disconnect-PssBroken.ps1 ^------
 
 #*------v find-profileScripts.ps1 v------
-function find-profileScripts {
-    <#
-    .SYNOPSIS
-    find-profileScripts - Reports on configured local Powershell profiles:Scope, WPS|PSCore,host,path)
-    .NOTES
-    Version     : 1.0.0
-    Author      : (un-attributed Idera post)
-    Website     : http://www.toddomation.com
-    Twitter     : @tostka / http://twitter.com/tostka
-    CreatedDate : 20201001-0900PM
-    FileName    : find-profileScripts.ps1 
-    License     : (none asserted)
-    Copyright   : (none asserted)
-    Github      : https://github.com/tostka/verb-Mods
-    Tags        : Powershell,Profile
-    AddedCredit : (un-attributed Idera post)
-    AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
-    AddedTwitter: URL
-    REVISIONS
-    * 10:16 AM 12/1/2020 cleanedup missing func decl line
-    .DESCRIPTION
-    find-profileScripts.ps1 - Reports on local Powershell profiles
-    .OUTPUTS
-    System.Object[]
-    .EXAMPLE
-    $profs = find-profileScripts
-    .LINK
-    https://github.com/tostka/verb-XXX
-    .LINK
-    https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
-    #>
-    # calculate the parent paths that can contain profile scripts
-    $Paths = @{
+$Paths = @{
         AllUser_WPS = $pshome ;
         CurrentUser_WPS = Join-Path -Path ([Environment]::GetFolderPath('MyDocuments')) -ChildPath "WindowsPowerShell" ;
         AllUser_PS = "$env:programfiles\PowerShell\*" ;
         CurrentUser_PS = Join-Path -Path ([Environment]::GetFolderPath('MyDocuments')) -ChildPath "PowerShell" ;
     } ;
     $OutObj = @() ; 
-    # process and summarize each path
     $Paths.Keys | ForEach-Object {
         $key = $_ ;
         $path = Join-Path -Path $paths[$key] -ChildPath '*profile.ps1' ;
@@ -175,8 +142,7 @@ function find-profileScripts {
             } ;
         } ;
     } ; 
-    $outObj | write-output ; 
-}
+    $outObj | write-output
 
 #*------^ find-profileScripts.ps1 ^------
 
@@ -1100,7 +1066,6 @@ Function update-PSPowerShellGetLegacy {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell,Module,PowershellGet,Legacy
     REVISIONS
-    * 10:39 AM 12/1/2020 needs to be debugged ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
     * 10:37 AM 11/5/2020 init
     .DESCRIPTION
     update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
@@ -1117,24 +1082,29 @@ Function update-PSPowerShellGetLegacy {
     The static PowershellGet content can then be manually copied from that location 
     to the normal $env:psmodulepath "Module"-storage locations on Psv3/Psv4 
     machines that require functional PowerShellGet, to leverage modern PSRepo use. 
+    .PARAMETER  PARAMNAME
+
+    .PARAMETER  PARAMNAME
+
     .PARAMETER ShowDebug
     Parameter to display Debugging messages [-ShowDebug switch]
     .PARAMETER Whatif
     Parameter to run a Test no-change pass [-Whatif switch]
     .EXAMPLE
-    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
-    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Users') -force -whatif ; 
-    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *CurrentUser* Modules directory.
+    .\update-PSPowerShellGetLegacy.ps1
     .EXAMPLE
-    install-PSPowerShellGetLegacy.ps1 -localPSRepoPath $($localPSRepoPath) -whatif
-    copy-item -path "$localPSRepoPath\PSGetStatic" -destination ($env:psmodulepath.split(';') -match '[A-Z]:\\Program\sFiles\\WindowsPowerShell') -force -whatif ; 
-    Update PowershellGet legacy support in the localPSRepoPath, then copy the updated files to the *AllUsers* Modules directory.
+    .\update-PSPowerShellGetLegacy.ps1
     .LINK
     https://github.com/tostka/verb-Module
     #>
-    # Requires -Version 5 # can't use version in child ps1's:the monolithic .psm1 can only have *one* instance of #requires -version, in the entire module! shift to testing $host.version.major inline
+    #Requires -Version 5
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
     PARAM(
+        #[Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="HELPMSG[-PARAM SAMPLEINPUT]")]
+        #[ValidateNotNullOrEmpty()]
+        #[Alias('ALIAS1', 'ALIAS2')]
+        #$PARAM,
         [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
         [switch] $showDebug,
         [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
@@ -1142,9 +1112,6 @@ Function update-PSPowerShellGetLegacy {
     ) ;
     BEGIN { 
         $Verbose = ($VerbosePreference -eq 'Continue') ; 
-        if($host.version.major -ne 5){
-            throw "This script must be run on Powershell v5 (for full PSGet support)!" ; 
-        } ; 
     } ;  # BEGIN-E
     PROCESS {
         $error.clear() ;
@@ -1261,5 +1228,31 @@ Remove the -whatif to run a full execution & install.
 
 #*======^ END FUNCTIONS ^======
 
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
 
+
+# SIG # Begin signature block
+# MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
+# gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUzCw6DUdoE0gYfh8GGNyI33gT
+# Em+gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
+# Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
+# ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
+# a+NnFYNRPPa8Bnm071ohGe27jNWKPVUbDfd0OY2sqCBQCEFVb5pqcIECRRnlhN5H
+# +EEJmm2x9AU0uS7IHxHeUo8fkW4vm49adkat5gAoOZOwbuNntBOAJy9LCyNs4F1I
+# KKphP3TyDwe8XqsEVwB2m9FPAgMBAAGjdjB0MBMGA1UdJQQMMAoGCCsGAQUFBwMD
+# MF0GA1UdAQRWMFSAEL95r+Rh65kgqZl+tgchMuKhLjAsMSowKAYDVQQDEyFQb3dl
+# clNoZWxsIExvY2FsIENlcnRpZmljYXRlIFJvb3SCEGwiXbeZNci7Rxiz/r43gVsw
+# CQYFKw4DAh0FAAOBgQB6ECSnXHUs7/bCr6Z556K6IDJNWsccjcV89fHA/zKMX0w0
+# 6NefCtxas/QHUA9mS87HRHLzKjFqweA3BnQ5lr5mPDlho8U90Nvtpj58G9I5SPUg
+# CspNr5jEHOL5EdJFBIv3zI2jQ8TPbFGC0Cz72+4oYzSxWpftNX41MmEsZkMaADGC
+# AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
+# Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
+# AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQaHRQJ
+# UN5gwPn7GZnIDrD/ojQLGTANBgkqhkiG9w0BAQEFAASBgEhQfRZE2amBIa5TWr3b
+# QkmaWVRXv/O+GIhwbo3W0k1dTXOsk9WlZ713+gYiaJkAQaKjMlOv+uhXl7Aogat1
+# 5scxVa2GKZLZx2iiRVYFhpXY1cxw/fKP/Tlr+NwllFeKFtUwA9XPYMQ2Cp/yXy+4
+# DUQ18Vdd9npVaPvjR70Y7eE2
+# SIG # End signature block

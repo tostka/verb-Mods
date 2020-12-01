@@ -1,7 +1,8 @@
-#find-profileScripts.ps1
+#*------v Function find-profileScripts v------
+function find-profileScripts {
     <#
     .SYNOPSIS
-    find-profileScripts - Reports on local Powershell profiles
+    find-profileScripts - Reports on configured local Powershell profiles:Scope, WPS|PSCore,host,path)
     .NOTES
     Version     : 1.0.0
     Author      : (un-attributed Idera post)
@@ -9,24 +10,21 @@
     Twitter     : @tostka / http://twitter.com/tostka
     CreatedDate : 20201001-0900PM
     FileName    : find-profileScripts.ps1 
-    License     : MIT License
+    License     : (none asserted)
     Copyright   : (none asserted)
-    Github      : https://github.com/tostka/verb-XXX
+    Github      : https://github.com/tostka/verb-Mods
     Tags        : Powershell,Profile
     AddedCredit : (un-attributed Idera post)
     AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
     AddedTwitter: URL
     REVISIONS
+    * 10:16 AM 12/1/2020 cleanedup missing func decl line
     .DESCRIPTION
     find-profileScripts.ps1 - Reports on local Powershell profiles
     .OUTPUTS
-    Returns a custom object with 
-    System.Boolean
-    [| get-member the output to see what .NET obj TypeName is returned, to use here]
+    System.Object[]
     .EXAMPLE
-    .\find-profileScripts.ps1
-    .EXAMPLE
-    .\find-profileScripts.ps1
+    $profs = find-profileScripts
     .LINK
     https://github.com/tostka/verb-XXX
     .LINK
@@ -40,6 +38,7 @@
         CurrentUser_PS = Join-Path -Path ([Environment]::GetFolderPath('MyDocuments')) -ChildPath "PowerShell" ;
     } ;
     $OutObj = @() ; 
+    # process and summarize each path
     $Paths.Keys | ForEach-Object {
         $key = $_ ;
         $path = Join-Path -Path $paths[$key] -ChildPath '*profile.ps1' ;
