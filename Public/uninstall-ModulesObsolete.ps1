@@ -18,6 +18,7 @@ function uninstall-ModulesObsolete {
     AddedWebsite: http://sharepointjack.com/2017/powershell-script-to-remove-duplicate-old-modules/
     AddedTwitter: @sharepointjack / http://twitter.com/sharepointjack	
     REVISIONS
+    * 2:38 PM 2/26/2021 replc spur write-warning -for
     * 12:38 PM 8/7/2020 added -scope vari, and test for local\Administrators (when running AllUsers scope uninstalls), fixed comparison typo #78
     * 1:03 PM 8/5/2020, rewrote & expanded orig concept as func, added to verb-Mods
     .DESCRIPTION
@@ -114,7 +115,7 @@ function uninstall-ModulesObsolete {
             if (-not(Test-IsLocalAdmin)){
                 $smsg = "Some modules targeted are in the *AllUsers* context (within ProgramFiles)...`n$(($AllUMods|ft -a InstalledLocation|out-string).trim())`nInstallation/Uninstallation from that context *requires* local\Administrator permissions, which are not currently available under $($env:USERDOMAIN)\$($env:USERNAME). EXITING!" ; 
                 if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error } #Error|Warn|Debug 
-                else{ write-warning -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                else{ write-warning  "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
                 throw "AllUsers Modules targeted, non-local\Administrator permisisons present." ; 
                 break ; 
             } ; 

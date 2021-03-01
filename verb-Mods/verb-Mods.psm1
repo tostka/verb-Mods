@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.23.0
+  Version     : 1.0.24.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -921,6 +921,7 @@ function uninstall-ModulesObsolete {
     AddedWebsite: http://sharepointjack.com/2017/powershell-script-to-remove-duplicate-old-modules/
     AddedTwitter: @sharepointjack / http://twitter.com/sharepointjack	
     REVISIONS
+    * 2:38 PM 2/26/2021 replc spur write-warning -for
     * 12:38 PM 8/7/2020 added -scope vari, and test for local\Administrators (when running AllUsers scope uninstalls), fixed comparison typo #78
     * 1:03 PM 8/5/2020, rewrote & expanded orig concept as func, added to verb-Mods
     .DESCRIPTION
@@ -1017,7 +1018,7 @@ function uninstall-ModulesObsolete {
             if (-not(Test-IsLocalAdmin)){
                 $smsg = "Some modules targeted are in the *AllUsers* context (within ProgramFiles)...`n$(($AllUMods|ft -a InstalledLocation|out-string).trim())`nInstallation/Uninstallation from that context *requires* local\Administrator permissions, which are not currently available under $($env:USERDOMAIN)\$($env:USERNAME). EXITING!" ; 
                 if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Error } #Error|Warn|Debug 
-                else{ write-warning -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                else{ write-warning  "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
                 throw "AllUsers Modules targeted, non-local\Administrator permisisons present." ; 
                 break ; 
             } ; 
@@ -1100,7 +1101,7 @@ Function update-PSPowerShellGetLegacy {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell,Module,PowershellGet,Legacy
     REVISIONS
-    * 10:39 AM 12/1/2020 needs to be debugged ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
+    * 4:14 PM 12/1/2020 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
     * 10:37 AM 11/5/2020 init
     .DESCRIPTION
     update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
@@ -1267,8 +1268,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUUcUwIRbG294AeoT6G1CFRK8f
-# rL+gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUYGydI2A36DGcQBgFwwHURclY
+# YwCgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -1283,9 +1284,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTL5CAG
-# 2HloRa2XuwAUPQhiws99+zANBgkqhkiG9w0BAQEFAASBgCQ0+hrt/tcRAYAhCpP9
-# Jls53UgdztvhVTq6lsZ8VysikiJQArZCnDJPGg6NwKk23KdHxzdEKYYVFaKjYJYc
-# GBtgX4b4ibO/P4dlr13g4iy4fJhRIxLlVCWbpCnYyHbBIxdyAzLi5Ot+f5WyHQ7x
-# aXGrJEj/aSd6FYWKMTz3IoIg
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTm96HZ
+# 3tfsc0m7DLPb16HDfe+7JTANBgkqhkiG9w0BAQEFAASBgAJjt1NGtPCvLrTiCayy
+# n4l75WJiGBX+7dc7vxRjMu2Nl+P716Wgmzt2HWjIpyTqluf3Uq17XZwcUEaFQU9x
+# T+5PEjYAGwDfvPwgVOv2y6/BrcXPiysG+uKJnUgTtVaDBKhTca2uN0/V+Y07dzYg
+# ySiXwV/yH0RI/TvTGXPEXP3a
 # SIG # End signature block
