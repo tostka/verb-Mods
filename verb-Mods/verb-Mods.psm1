@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.24.0
+  Version     : 1.0.25.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -406,6 +406,168 @@ Author      : Todd Kadrie
 }
 
 #*------^ Get-ModulePublishedVersion.ps1 ^------
+
+#*------v Install-ModulesTin.ps1 v------
+function Install-ModulesTin {
+    <#
+    .SYNOPSIS
+    Install-ModulesTin - Loops a list of PowershellGallery modules, checks for gmo -list, and get-installedmodule, and if neither, finds & installs current rev from PsG.
+    .NOTES
+    Version     : 1.0.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2018-03-24
+    FileName    : Install-ModulesTin.ps1
+    License     : MIT
+    Copyright   : (c) 4/7/2020 Todd Kadrie
+    Github      : https://github.com/tostka
+    Tags        : Powershell,Module,Lifecycle
+    AddedCredit : 
+    AddedWebsite: 
+    AddedTwitter: 
+    REVISIONS
+    * 1:24 PM 10/6/2021 code local-repo pref for find-module returning multi matches (generally PSGallery & a local repo, with a fork etc on local - assumes the local is tuned/updated for our specific needs)
+    * 2:22 PM 10/5/2021 ported from install-WorkstationModules.ps1 to verb-mods (6/2/21 vers)
+    .DESCRIPTION
+    Install-ModulesTin - Loops a list of PowershellGallery modules, checks for gmo -list, and get-installedmodule, and if neither, finds & installs current rev from PsG.
+    .PARAMETER Modules
+    Array of PSGallery Modules to Install[-modules 'mod1','mod2']
+    .PARAMETER Scope
+    Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]
+    .PARAMETER whatIf
+    Whatif Flag  [-whatIf]
+    .EXAMPLE
+    $psdeskmods ="Pester","PSScriptAnalyzer" ; 
+    $bRet = Install-ModulesTin -Modules $psdeskmods -scope CurrentUser -showdebug:$($showdebug) -whatif:$($whatif) ; 
+    .LINK
+    https://github.com/tostka
+    #>
+    #Requires -Modules verb-Auth
+    #Requires -Version 3
+    [CmdletBinding()] 
+    Param(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of PSGallery Modules to Install")]
+        [ValidateNotNullOrEmpty()][array]$Modules,
+        [Parameter(Position=1,HelpMessage="Module installation scope (CurrentUser|AllUsers - defaults CU)[-Scope AllUsers]")]
+        [ValidateSet("AllUsers","CurrentUser")]
+        $Scope,
+        [Parameter(HelpMessage="Custom local Repository (non-PSGallery)[-Repository myLocalRepo]")]
+        $Repository, 
+        [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
+        [switch] $showDebug,
+        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
+        [switch] $whatIf
+    ) ;
+    $verbose = ($VerbosePreference -eq "Continue") ; 
+    if(!$Scope){$Scope = "CurrentUser"} ; 
+
+    $propsFindMod = 'Version','Name','Repository','Description' ;
+    $propsFindModV = 'name','type','version','description','repository' ; 
+    
+    $ttl=($Modules|measure).count ; 
+    $Procd=0 ; 
+    $smsg= "Installing $(($Modules|measure).count) PS Modules:" ; 
+    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+    foreach ($Mod in $Modules){
+        $Procd++ ; 
+        $sBnrS="`n#*------v ($($Procd)/$($ttl)):`$Mod:$($Mod) v------" ; 
+        $smsg= "$($sBnrS)" ;
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+        # refresh splat every pass - don't want prior pass resolved repo to recycle
+        $pltInstMod=[ordered]@{
+            Name=$null ; 
+            Scope=$scope ;
+            ErrorAction="Stop" ; 
+            whatif=$($whatif) ;  
+        } ; 
+        if($Repository -AND $Repository -ne 'PSGallery'){
+            $smsg = "(adding custom `pltInstMod:'Repository',$($Repository))" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            $pltInstMod.add('Repository',$Repository) ; 
+        } ; 
+        $smsg = "($($Mod):gmo -list & get-installedmodule...)" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+        if(!($emod=get-module -name $Mod -listavailable -ea 0) -and !($emod=get-installedmodule -name $Mod  -ea 0)){
+            $smsg = "==FIND-MODULE:$($Mod):" ;
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            $error.clear() ;
+            $smsg = "(find-module -name $($Mod))" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            if($rmod=find-module -name $Mod -ea 0  ){
+                # stats is at psg & localrepo, prioritze multi-hits
+                # course, my version is improved: I converted broken .md help to CBH, added example to use get-histogram etc, so defer to mine.
+                if(($rmod|measure).count -gt 1){
+                    $smsg= "Multiple matches returned!:`n$(($rmod|fl $propsFindModV |out-string).trim())" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    if($lmod = $rmod|?{$_.repository -eq $localpsRepo}){
+                        $smsg = "LocalRepo mod found, deferring to local:$($localPsRepo) copy" ; 
+                        $smsg += "`n$(($lmod| ft -a $propsFindMod |out-string).trim())" ; 
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                        $pltInstMod.add('Repository',$localpsRepo) ; 
+                        $rmod = $lmod ; 
+                    } else { 
+                        $smsg = "Multiple available published modules, unable to determine which to install." ;
+                        $smsg += "`nPlease rerun with -Repository set to the proper registered repo name." ; 
+                        #$smsg += "`nFound modules:`n$(($rmod| ft -a $propsFindMod |out-string).trim())" ; 
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                        else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                        Break ; 
+                    } ; 
+                } ; 
+                $smsg= "INSTALLING MATCH:`n$(($rmod| fl $propsFindModV |out-string).trim())" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                $pltInstMod.name = $rmod.name ; 
+                $smsg= "install-module w`n$(($pltInstMod|out-string).trim())" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                TRY { 
+                    install-module @pltInstMod ; 
+                $error.clear() ;
+                } CATCH {
+                    $ErrTrapd=$Error[0] ;
+                    $smsg = "Failed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: $($ErrTrapd)" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    #-=-record a STATUSWARN=-=-=-=-=-=-=
+                    $statusdelta = ";WARN"; # CHANGE|INCOMPLETE|ERROR|WARN|FAIL ;
+                    if(gv passstatus -scope Script -ea 0){$script:PassStatus += $statusdelta } ;
+                    if(gv -Name PassStatus_$($tenorg) -scope Script -ea 0){set-Variable -Name PassStatus_$($tenorg) -scope Script -Value ((get-Variable -Name PassStatus_$($tenorg)).value + $statusdelta)} ; 
+                    #-=-=-=-=-=-=-=-=
+                    $smsg = "FULL ERROR TRAPPED (EXPLICIT CATCH BLOCK WOULD LOOK LIKE): } catch[$($ErrTrapd.Exception.GetType().FullName)]{" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level ERROR } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+                } ; 
+            } else {
+                $smsg= "$($Mod):;NOT-FOUND W FIND-MODULE!" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            } ; 
+
+        } else { 
+            $smsg= "$($Mod):LOCALLY INSTALLED`n$(($emod| FORMAT-TABLE -AUTO moduletype,version,path | out-string).trim())" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        } ; 
+        $smsg= "$($sBnrS.replace('-v','-^').replace('v-','^-'))" ;
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+    } 
+}
+
+#*------^ Install-ModulesTin.ps1 ^------
 
 #*------v load-Module.ps1 v------
 function load-Module {
@@ -1262,14 +1424,14 @@ Remove the -whatif to run a full execution & install.
 
 #*======^ END FUNCTIONS ^======
 
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
 
 
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUYGydI2A36DGcQBgFwwHURclY
-# YwCgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUMOA4k/pAkQghwbfvCjofhgmB
+# PMmgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -1284,9 +1446,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTm96HZ
-# 3tfsc0m7DLPb16HDfe+7JTANBgkqhkiG9w0BAQEFAASBgAJjt1NGtPCvLrTiCayy
-# n4l75WJiGBX+7dc7vxRjMu2Nl+P716Wgmzt2HWjIpyTqluf3Uq17XZwcUEaFQU9x
-# T+5PEjYAGwDfvPwgVOv2y6/BrcXPiysG+uKJnUgTtVaDBKhTca2uN0/V+Y07dzYg
-# ySiXwV/yH0RI/TvTGXPEXP3a
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQmtAsr
+# 2OkyS2M3+1RshY6s27t9jDANBgkqhkiG9w0BAQEFAASBgG5ipVTtOE70wH29gKSw
+# mvUfDrCA0xMBQK0fvs3A42rtkdFCDihKMYXvkLF3BqtgyqPsE0CvVW3FOomKo7lM
+# XHi8x4dYHqZR9h3IFE1Q+lhauluz3PIHNiFzLoSWDSjjsaHJwrWc1t73i30dMaa9
+# v0kmUsbQrWb5b/Nporos3J0h
 # SIG # End signature block
