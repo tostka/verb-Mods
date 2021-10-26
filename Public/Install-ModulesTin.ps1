@@ -35,7 +35,6 @@ function Install-ModulesTin {
     https://github.com/tostka
     #>
     #Requires -Modules verb-Auth
-    #Requires -Version 3
     [CmdletBinding()] 
     Param(
         [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of PSGallery Modules to Install")]
