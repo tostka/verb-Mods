@@ -1,6 +1,4 @@
-﻿# revert-moduleInstalledRevision.ps1
-
-#*------v Function revert-moduleInstalledRevision v------
+﻿#*------v Function revert-moduleInstalledRevision v------
 function revert-moduleInstalledRevision {
     <#
     .SYNOPSIS
@@ -14,12 +12,13 @@ function revert-moduleInstalledRevision {
     FileName    : revert-moduleInstalledRevision.ps1
     License     : MIT License
     Copyright   : (c) 2021 Todd Kadrie
-    Github      : https://github.com/tostka/verb-dev
+    Github      : https://github.com/tostka/verb-mod
     Tags        : Powershell,Module,Maintenance
     AddedCredit : REFERENCE
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
+    * 12:57 PM 11/3/2021 correction: I'd shifted it below to verb-mods.
     * 1:42 PM 10/25/2021 init, flipped to verb-dev func
     .DESCRIPTION
     revert-moduleInstalledRevision.ps1 - Rollback broken Module version to either explictly specified -RequiredVersion, or most recent prior date version (eg, prior to midnight today). 
