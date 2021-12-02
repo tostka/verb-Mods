@@ -18,11 +18,12 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
+    * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
     test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
     ..PARAMETER Paths
-    Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']
+    Module source paths to be processed (defaults to expanding my `$GIT_ReposRoot profile variable into array of module repos w names prefixed 'verbs*')[-paths 'c:\path-to\','c:\path2-to']
     .PARAMETER Repository
     [string]Repository to be checked against (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]
     .PARAMETER rgxExcludeExts
@@ -46,9 +47,9 @@ function test-UnReleasedModuleContent {
     # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
     PARAM(
-        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
-        [ValidateScript({Test-Path $_})]
-        [string[]]$Paths,
+        [Parameter(Position=0,Mandatory=$false,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
+        #[ValidateScript({Test-Path $_})]
+        [string[]]$Paths=(resolve-path (join-path -path $GIT_REPOSROOT -childpath "verb*")),
         [Parameter(HelpMessage="[regex]Files Extensions to be excluded from the comparison[-rgxExcludeExts '(.txt|.xml)']")]
         [regex]$rgxExcludeExts = '(\.nupkg|\.gitignore|\.*_.*)',
         [Parameter(HelpMessage="[regex]File Names to be excluded from the comparison[-rgxexclFiles '(.*.logs)']")]
@@ -66,22 +67,27 @@ function test-UnReleasedModuleContent {
         $procd=0 ; $ttl = ($Paths|measure).count ; 
         foreach ($path in $Paths){
             $procd++ ; 
-            #$sBnrS="`n#*------v PROCESSING ($($Procd)/$($ttl)): v------" ; 
+            $sBnrS="`n#*------v PROCESSING ($($Procd)/$($ttl)):$($path) v------" ; 
             write-verbose "$($sBnrS)" ;
             $highpkg = $latermodfiles = $null ; 
             TRY {
                 $error.clear() ;
+                if(-not (test-path $Path -ea STOP)){throw "missing path!"} ; 
                 $pltGci=[ordered]@{path ="$($path)\*.nupkg" ; recurse=$true ; ea = 'STOP'} ;
                 write-verbose "get-childitem w`n$(($pltGci|out-string).trim())" ; 
                 $pkgs = get-childitem @pltGci ; 
-                $pkgs = $pkgs | select *,@{name="version";expression={[version]([regex]::match($_.name,$rgxNuPkgFileName).captures[0].groups[1].value)}} | sort version ;
+                $pkgs = $pkgs | 
+                    select *,@{name="version";expression={[version]([regex]::match($_.name,$rgxNuPkgFileName).captures[0].groups[1].value)}} | 
+                    sort version ;
                 if($pkgs){
                     if($pkgs -is [system.array]){$highpkg = $pkgs[-1]}
                     else {$highpkg = $pkgs} ; 
                     write-verbose "$($path):High pkg:`n$(($highpkg |ft -a name,lastwritetime,version|out-string).trim())" ; 
                     $pltGci=[ordered]@{path =$path ;recurse=$true ;file = $true ; ea = 'STOP'} ;
                     write-verbose "get-childitem w`n$(($pltGci|out-string).trim())" ; 
-                    $latermodfiles = get-childitem $path -recurse -file |?{$_.extension -notmatch $rgxExcludeExts -AND $_.name -notmatch $rgxexclFiles} | ?{$_.LastWriteTime -gt $highpkg.LastWriteTime} | sort LastWriteTime; 
+                    $latermodfiles = get-childitem $path -recurse -file |
+                        ?{$_.extension -notmatch $rgxExcludeExts -AND $_.name -notmatch $rgxexclFiles} | 
+                        ?{$_.LastWriteTime -gt $highpkg.LastWriteTime} | sort LastWriteTime; 
                     if($latermodfiles){
                         $smsg = "`n`n===Module $($path) has files dated *after* last .pkg!:`n" ; 
                         $smsg += "`n$(($highpkg|ft -a name,lastwritetime,version|out-string).trim())`n" ; 
@@ -97,9 +103,9 @@ function test-UnReleasedModuleContent {
                 $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
                 if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
                 else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                Break  #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+                Continue  #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
             } ; 
-            #write-verbose $sBnrS.replace('-v','-^').replace('v-','^-') ;
+            write-verbose $sBnrS.replace('-v','-^').replace('v-','^-') ;
         } ; 
     }  # PROC-E
     END {} ;

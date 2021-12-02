@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.0.24.0
+  Version     : 1.1.0.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -406,6 +406,266 @@ Author      : Todd Kadrie
 }
 
 #*------^ Get-ModulePublishedVersion.ps1 ^------
+
+#*------v get-RepoModulesHighestVersion.ps1 v------
+function get-RepoModulesHighestVersion {
+    <#
+    .SYNOPSIS
+    get-RepoModulesHighestVersion.ps1 - Check specified Repository (defaults to $global:localPsRepo) for highest .nupkg verison for each of module directories specified by -Paths.
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2021-11-03
+    FileName    : get-RepoModulesHighestVersion.ps1
+    License     : MIT License
+    Copyright   : (c) 2021 Todd Kadrie
+    Github      : https://github.com/tostka/verb-mods
+    Tags        : Powershell,Module,Maintenance,Repository
+    AddedCredit : REFERENCE
+    AddedWebsite: URL
+    AddedTwitter: URL
+    REVISIONS
+    * 2:02 PM 11/3/2021 init, flipped to verb-mods func
+    .DESCRIPTION
+    get-RepoModulesHighestVersion.ps1 - Check specified Repository (defaults to $global:localPsRepo) for highest .nupkg verison for each of module directories specified by -Paths.
+    Calculates and sorts on _actual_ semantic version (rather than strict n.n.n text), to determine highest/latest revision. 
+    .PARAMETER Paths
+    Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']
+    .PARAMETER OutObject
+    Switch to return a summarizing object to the pipeline (defaults true)[-OutObject `$false]
+    .INPUTS
+    None. Does not accepted piped input.(.NET types, can add description)
+    .OUTPUTS
+    None. Returns no objects or output (.NET types)
+    .EXAMPLE
+    PS> $Paths += (resolve-path c:\sc\verb*) ;
+    PS> get-RepoModulesHighestVersion -Paths $Paths -verbose ; 
+    Run a pass against all paths below the c:\sc\ directory, with directory names starting with verb*, with verbose output.
+    .EXAMPLE
+    PS> $latestRevs = (resolve-path c:\sc\verb*) | get-RepoModulesHighestVersion ; 
+    PS> $latestRevs |ft -a name,lastwritetime,version ; 
+    Pipeline example, process list of dirs matching pattern c:\sc\verb*, for highest .nupkg revision in the default local repository, and assign summary object to $latestRevs, then output a summary of the returned object.
+    .LINK
+    https://github.com/tostka/verb-Mods
+    #>
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    [CmdletBinding()]
+    PARAM(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
+        [ValidateScript({Test-Path $_})]
+        [string[]]$Paths,
+        [Parameter(HelpMessage="Repository (defaults to `$global:localPsRepo)[-Repository 'somerepo']")]
+        [string]$Repository=$localPsRepo,
+        [Parameter(HelpMessage="Switch to return a summarizing object to the pipeline (defaults true)[-OutObject `$false]")]
+        [switch] $OutObject=$true
+    ) ;
+    BEGIN {
+        $verbose = ($VerbosePreference -eq "Continue") ;
+        $rgxNuPkgFileName = '.*\.(\d+\.\d+\.\d+)\.nupkg$' ; 
+        $repoDirs=$allPkgs=@() ; 
+        $RepoSrc = (Get-PSRepository -name $Repository).SourceLocation ; 
+        $allPkgs=@() ; 
+    } ; 
+    PROCESS{
+        $procd=0 ; $ttl = ($Paths|measure).count ; 
+        foreach ($path in $Paths){
+            $procd++ ; 
+            TRY {
+                $error.clear() ;
+                write-host "(processing:$($path)...)" ; 
+                $pltGci=[ordered]@{path ="$($reposrc)\$(split-path $path -leaf)*.nupkg" ; ea = 'STOP'} ;
+                write-verbose "`nget-childitem w`n$(($pltGci|out-string).trim())" ; 
+                $pkgs = gci @pltGci ; 
+                $pkgs = $pkgs | select *,@{name="version";expression={[version]([regex]::match($_.name,'.*\.(\d+\.\d+\.\d+)\.nupkg$').captures[0].groups[1].value)}} | sort version ;
+                if($pkgs){
+                    if($pkgs -is [system.array]){$allPkgs += $pkgs[-1]}
+                    else {$allPkgs += $pkgs} ; 
+                    write-verbose "`n$(($allPkgs[-1]|ft -a name,lastwritetime,version|out-string).trim())" ; 
+
+                } ; 
+            } CATCH {
+                $ErrTrapd=$Error[0] ;
+                $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                Break  #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+            } ; 
+        } ; 
+    }  # PROC-E
+    END {
+        if(-not($outObject)){
+            $smsg = "`n$(($allpkgs|ft -a name,lastwritetime,version|out-string).trim())" ; 
+            write-host $smsg ; 
+        } else { 
+          $allpkgs | write-output ; 
+        } ; 
+    } ;
+}
+
+#*------^ get-RepoModulesHighestVersion.ps1 ^------
+
+#*------v Install-ModulesTin.ps1 v------
+function Install-ModulesTin {
+    <#
+    .SYNOPSIS
+    Install-ModulesTin - Loops a list of PowershellGallery modules, checks for gmo -list, and get-installedmodule, and if neither, finds & installs current rev from PsG.
+    .NOTES
+    Version     : 1.0.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2018-03-24
+    FileName    : Install-ModulesTin.ps1
+    License     : MIT
+    Copyright   : (c) 4/7/2020 Todd Kadrie
+    Github      : https://github.com/tostka
+    Tags        : Powershell,Module,Lifecycle
+    AddedCredit : 
+    AddedWebsite: 
+    AddedTwitter: 
+    REVISIONS
+    * 1:24 PM 10/6/2021 code local-repo pref for find-module returning multi matches (generally PSGallery & a local repo, with a fork etc on local - assumes the local is tuned/updated for our specific needs)
+    * 2:22 PM 10/5/2021 ported from install-WorkstationModules.ps1 to verb-mods (6/2/21 vers)
+    .DESCRIPTION
+    Install-ModulesTin - Loops a list of PowershellGallery modules, checks for gmo -list, and get-installedmodule, and if neither, finds & installs current rev from PsG.
+    .PARAMETER Modules
+    Array of PSGallery Modules to Install[-modules 'mod1','mod2']
+    .PARAMETER Scope
+    Scope to be targeted (AllUsers|CurrentUser, default: no filtering)[-Scope AllUsers]
+    .PARAMETER whatIf
+    Whatif Flag  [-whatIf]
+    .EXAMPLE
+    $psdeskmods ="Pester","PSScriptAnalyzer" ; 
+    $bRet = Install-ModulesTin -Modules $psdeskmods -scope CurrentUser -showdebug:$($showdebug) -whatif:$($whatif) ; 
+    .LINK
+    https://github.com/tostka
+    #>
+    #Requires -Modules verb-Auth
+    [CmdletBinding()] 
+    Param(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Array of PSGallery Modules to Install")]
+        [ValidateNotNullOrEmpty()][array]$Modules,
+        [Parameter(Position=1,HelpMessage="Module installation scope (CurrentUser|AllUsers - defaults CU)[-Scope AllUsers]")]
+        [ValidateSet("AllUsers","CurrentUser")]
+        $Scope,
+        [Parameter(HelpMessage="Custom local Repository (non-PSGallery)[-Repository myLocalRepo]")]
+        $Repository, 
+        [Parameter(HelpMessage="Debugging Flag [-showDebug]")]
+        [switch] $showDebug,
+        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
+        [switch] $whatIf
+    ) ;
+    $verbose = ($VerbosePreference -eq "Continue") ; 
+    if(!$Scope){$Scope = "CurrentUser"} ; 
+
+    $propsFindMod = 'Version','Name','Repository','Description' ;
+    $propsFindModV = 'name','type','version','description','repository' ; 
+    
+    $ttl=($Modules|measure).count ; 
+    $Procd=0 ; 
+    $smsg= "Installing $(($Modules|measure).count) PS Modules:" ; 
+    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+    foreach ($Mod in $Modules){
+        $Procd++ ; 
+        $sBnrS="`n#*------v ($($Procd)/$($ttl)):`$Mod:$($Mod) v------" ; 
+        $smsg= "$($sBnrS)" ;
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+        # refresh splat every pass - don't want prior pass resolved repo to recycle
+        $pltInstMod=[ordered]@{
+            Name=$null ; 
+            Scope=$scope ;
+            ErrorAction="Stop" ; 
+            whatif=$($whatif) ;  
+        } ; 
+        if($Repository -AND $Repository -ne 'PSGallery'){
+            $smsg = "(adding custom `pltInstMod:'Repository',$($Repository))" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            $pltInstMod.add('Repository',$Repository) ; 
+        } ; 
+        $smsg = "($($Mod):gmo -list & get-installedmodule...)" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+        if(!($emod=get-module -name $Mod -listavailable -ea 0) -and !($emod=get-installedmodule -name $Mod  -ea 0)){
+            $smsg = "==FIND-MODULE:$($Mod):" ;
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            $error.clear() ;
+            $smsg = "(find-module -name $($Mod))" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
+            if($rmod=find-module -name $Mod -ea 0  ){
+                # stats is at psg & localrepo, prioritze multi-hits
+                # course, my version is improved: I converted broken .md help to CBH, added example to use get-histogram etc, so defer to mine.
+                if(($rmod|measure).count -gt 1){
+                    $smsg= "Multiple matches returned!:`n$(($rmod|fl $propsFindModV |out-string).trim())" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    if($lmod = $rmod|?{$_.repository -eq $localpsRepo}){
+                        $smsg = "LocalRepo mod found, deferring to local:$($localPsRepo) copy" ; 
+                        $smsg += "`n$(($lmod| ft -a $propsFindMod |out-string).trim())" ; 
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                        $pltInstMod.add('Repository',$localpsRepo) ; 
+                        $rmod = $lmod ; 
+                    } else { 
+                        $smsg = "Multiple available published modules, unable to determine which to install." ;
+                        $smsg += "`nPlease rerun with -Repository set to the proper registered repo name." ; 
+                        #$smsg += "`nFound modules:`n$(($rmod| ft -a $propsFindMod |out-string).trim())" ; 
+                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                        else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                        Break ; 
+                    } ; 
+                } ; 
+                $smsg= "INSTALLING MATCH:`n$(($rmod| fl $propsFindModV |out-string).trim())" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                $pltInstMod.name = $rmod.name ; 
+                $smsg= "install-module w`n$(($pltInstMod|out-string).trim())" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                TRY { 
+                    install-module @pltInstMod ; 
+                $error.clear() ;
+                } CATCH {
+                    $ErrTrapd=$Error[0] ;
+                    $smsg = "Failed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: $($ErrTrapd)" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                    else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    #-=-record a STATUSWARN=-=-=-=-=-=-=
+                    $statusdelta = ";WARN"; # CHANGE|INCOMPLETE|ERROR|WARN|FAIL ;
+                    if(gv passstatus -scope Script -ea 0){$script:PassStatus += $statusdelta } ;
+                    if(gv -Name PassStatus_$($tenorg) -scope Script -ea 0){set-Variable -Name PassStatus_$($tenorg) -scope Script -Value ((get-Variable -Name PassStatus_$($tenorg)).value + $statusdelta)} ; 
+                    #-=-=-=-=-=-=-=-=
+                    $smsg = "FULL ERROR TRAPPED (EXPLICIT CATCH BLOCK WOULD LOOK LIKE): } catch[$($ErrTrapd.Exception.GetType().FullName)]{" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level ERROR } #Error|Warn|Debug 
+                    else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+                } ; 
+            } else {
+                $smsg= "$($Mod):;NOT-FOUND W FIND-MODULE!" ; 
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+            } ; 
+
+        } else { 
+            $smsg= "$($Mod):LOCALLY INSTALLED`n$(($emod| FORMAT-TABLE -AUTO moduletype,version,path | out-string).trim())" ; 
+            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        } ; 
+        $smsg= "$($sBnrS.replace('-v','-^').replace('v-','^-'))" ;
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+    } 
+}
+
+#*------^ Install-ModulesTin.ps1 ^------
 
 #*------v load-Module.ps1 v------
 function load-Module {
@@ -834,6 +1094,232 @@ function register-localPSRepository {
 
 #*------^ register-localPSRepository.ps1 ^------
 
+#*------v revert-ModuleInstalledRevision.ps1 v------
+function revert-moduleInstalledRevision {
+    <#
+    .SYNOPSIS
+    revert-moduleInstalledRevision.ps1 - Rollback broken Module version to either explictly specified -RequiredVersion, or most recent prior date version (eg, prior to midnight today). 
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2021-10-25
+    FileName    : revert-moduleInstalledRevision.ps1
+    License     : MIT License
+    Copyright   : (c) 2021 Todd Kadrie
+    Github      : https://github.com/tostka/verb-mod
+    Tags        : Powershell,Module,Maintenance
+    AddedCredit : REFERENCE
+    AddedWebsite: URL
+    AddedTwitter: URL
+    REVISIONS
+    * 12:57 PM 11/3/2021 correction: I'd shifted it below to verb-mods.
+    * 1:42 PM 10/25/2021 init, flipped to verb-dev func
+    .DESCRIPTION
+    revert-moduleInstalledRevision.ps1 - Rollback broken Module version to either explictly specified -RequiredVersion, or most recent prior date version (eg, prior to midnight today). 
+    This relies on a populated profile/global $localPsRepo value, which should contain the name of the local repository.
+    Note: This runs...
+    uninstall-module -name xxx -AllVersions -force
+    ... to COMPLETELY CLEAR any prior revisions. 
+    And then runs an install of the required version. With #requires or other depenedancies, this could require manual installs of interrum missing modules (or twinning code into the installed version, from future revisions). 
+
+    If -RequiredVersion is unspecified, the target rev is calculated as follows:
+    1. It determines most-recent prior-date rev by pulling all [modulename]*.nupkg files from the repo's SourceLocation, sorted on LastWriteTime 
+        (less accurate, but a lot simpler than select-object expressioning out real sorted semvers from the nupkg name string)
+    2. It then filters out all pkgs from the current day (post-midnight), and regex matches out most recent prior version's N.N.N version string, to populate the `$RequiredVersion value. 
+    .PARAMETER Name
+    [string] Module Name[-Name modulename]
+    .PARAMETER RequiredVersion
+    [version] Required revision to revert-to (semantic version n.n.n string)[-RequiredVersion 1.2.3]
+    .PARAMETER Repository
+    [string]Repository to be installed from (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]
+    .PARAMETER Whatif
+    [switch]Parameter to run a Test no-change pass [-Whatif]
+    .INPUTS
+    None. Does not accepted piped input.(.NET types, can add description)
+    .OUTPUTS
+    None. Returns no objects or output (.NET types)
+    .EXAMPLE
+    PS> revert-moduleInstalledRevision -name some-module -requiredversion 1.0.2 -whatif -verbose ;
+    Roll back specified module to specified requiredversion, whatif no-exec pass, and verbose.
+    .EXAMPLE
+    PS> revert-moduleInstalledRevision -name Some-Module ;
+    Roll back specified module to calulated most recent date revision on local Repository
+    .LINK
+    https://github.com/tostka/verb-XXX
+    .LINK
+    [ name related topic(one keyword per topic), or http://|https:// to help, or add the name of 'paired' funcs in the same niche (enable/disable-xxx)]
+    #>
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    ## [OutputType('bool')] # optional specified output type
+    [CmdletBinding()]
+    PARAM(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Module Name[-Name modulename]")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name,
+        [Parameter(Position=1,HelpMessage="[version]Required revision to revert-to (Semantic Version string)[-RequiredVersion]")]
+        [version] $RequiredVersion,
+        [Parameter(HelpMessage="[string]Repository to be installed from (defaults to `$global:localPsRepo/profile value) Name[-Repository SomeRepo]")]
+        [string]$Repository=$localPsRepo,
+        [Parameter(HelpMessage="Whatif Flag  [-whatIf]")]
+        [switch] $whatIf=$true
+    ) ;
+    $verbose = ($VerbosePreference -eq "Continue") ;
+    TRY {
+        $error.clear() ;
+        if(!$RequiredVersion){
+            $pltGrpo=[ordered]@{name = $localpsrepo ; ErrorAction='STOP'} ;
+            $pltGCI=[ordered]@{path="$((get-psrepository @pltGrpo).SourceLocation)\$($Name)*.nupkg" ; ErrorAction='STOP'} ;
+            write-host "(retrieving most recent prior-day's revision in Repo for $($Name)...)" ; 
+            write-verbose "get-psrepository w`n$(($pltGrpo|out-string).trim())" ; 
+            write-verbose "gci w`n$(($pltGCI|out-string).trim())" ;             
+            $Allvers = gci @pltGCI | sort lastwriteTime ; 
+            $RequiredVersion = [regex]::match(($allvers | ?{$_.LastWriteTime -lt (([datetime]::Today))}| sort lastwritetime | select -last 1 ).name,'(\d+\.\d+\.\d+)\.nupkg$').captures[0].groups[1].value ; 
+            $sRequiredVersion = $RequiredVersion.major,$RequiredVersion.minor,$RequiredVersion.build -join '.'
+        } ; 
+        if($RequiredVersion){
+            $pltRMod=[ordered]@{name = $Name  ; force=$true ; ErrorAction='Continue'; } ;
+            write-host "(removing current in-memory module copy)" ; 
+            write-verbose "remove-module w`n$(($pltRMod|out-string).trim())" ; 
+            remove-module @pltRMod ; 
+
+            write-host "(uninstalling all versions of $Name...)" ; 
+            $pltGrpo=[ordered]@{name = $Name  ; force=$true ; AllVersions= $true ;ErrorAction='Continue'; whatif=$($whatif)} ;
+            write-verbose "uninstall-module w`n$(($pltGrpo|out-string).trim())" ; 
+            uninstall-module @pltGrpo ; 
+
+            $pltIMod=[ordered]@{name = $Name  ; RequiredVersion = $sRequiredVersion ; Repository = $Repository ; force=$true ; AllowClobber= $true ;ErrorAction='STOP';whatif=$($whatif);} ;
+            write-host "Install-Module w`n$(($pltIMod|out-string).trim())" ; 
+            Install-Module @pltIMod ; 
+
+            write-host "(importing updated $Name...)" ; 
+            $pltIpMo=[ordered]@{name = $Name  ; force=$true ; ErrorAction='Stop'; } ;
+            write-verbose "import-module w`n$(($pltIpMo|out-string).trim())" ; 
+            import-module @pltIpMo ; 
+        } else {
+            write-warning "Unable to locate a prior date Rev`nother pkgs avail (rerun with -`$RequiredVersion populated):`n$(($Allvers|out-string).trim())" ; 
+            throw "`$RequiredVersion is unspecified and unable to locate most-recent prior date's version!" ;
+        }; 
+    } CATCH {
+        $ErrTrapd=$Error[0] ;
+        $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+        write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+        Break ;
+    } ; 
+}
+
+#*------^ revert-ModuleInstalledRevision.ps1 ^------
+
+#*------v test-UnReleasedModuleContent.ps1 v------
+function test-UnReleasedModuleContent {
+    <#
+    .SYNOPSIS
+    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2021-11-03
+    FileName    : test-UnReleasedModuleContent.ps1
+    License     : MIT License
+    Copyright   : (c) 2021 Todd Kadrie
+    Github      : https://github.com/tostka/verb-mod
+    Tags        : Powershell,Module,Maintenance
+    AddedCredit : REFERENCE
+    AddedWebsite: URL
+    AddedTwitter: URL
+    REVISIONS
+    * 1:12 PM 11/3/2021init, flipped to verb-mods func
+    .DESCRIPTION
+    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    ..PARAMETER Paths
+    Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']
+    .PARAMETER Repository
+    [string]Repository to be checked against (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]
+    .PARAMETER rgxExcludeExts
+    [regex]Files Extensions to be excluded from the comparison[-rgxExcludeExts '(.txt|.xml)']
+    .PARAMETER rgxexclFiles
+    [regex]File Names to be excluded from the comparison[-rgxexclFiles '(.*.logs)']
+    .INPUTS
+    None. Does not accepted piped input.(.NET types, can add description)
+    .OUTPUTS
+    None. Returns no objects or output (.NET types)
+    .EXAMPLE
+    PS> $Paths += (resolve-path c:\sc\verb*) ;
+    PS> test-UnReleasedModuleContent -Paths $Paths -verbose ; 
+    Run a pass against all paths below the c:\sc\ directory, with directory names starting with verb*, with verbose output.
+    .EXAMPLE
+    PS> (resolve-path c:\sc\verb*) |  test-UnReleasedModuleContent;
+    Pipeline example, echo solely modules that need a fresh Build/Release
+    .LINK
+    https://github.com/tostka/verb-Mods
+    #>
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    [CmdletBinding()]
+    PARAM(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
+        [ValidateScript({Test-Path $_})]
+        [string[]]$Paths,
+        [Parameter(HelpMessage="[regex]Files Extensions to be excluded from the comparison[-rgxExcludeExts '(.txt|.xml)']")]
+        [regex]$rgxExcludeExts = '(\.nupkg|\.gitignore|\.*_.*)',
+        [Parameter(HelpMessage="[regex]File Names to be excluded from the comparison[-rgxexclFiles '(.*.logs)']")]
+        [regex]$rgxexclFiles = '(.*-log.txt|ScriptAnalyzer-Results-.*\.xml|fingerprint)$',
+        [Parameter(HelpMessage="[string]Repository to be checked against (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]")]        
+        [string]$Repository=$localPsRepo
+    ) ;
+    BEGIN {
+        $verbose = ($VerbosePreference -eq "Continue") ;
+        $rgxNuPkgFileName = '.*\.(\d+\.\d+\.\d+)\.nupkg$' ; 
+        $repoDirs=$allPkgs=@() ; 
+        $RepoSrc = (Get-PSRepository -name $Repository).SourceLocation ; 
+    } ; 
+    PROCESS{
+        $procd=0 ; $ttl = ($Paths|measure).count ; 
+        foreach ($path in $Paths){
+            $procd++ ; 
+            #$sBnrS="`n#*------v PROCESSING ($($Procd)/$($ttl)): v------" ; 
+            write-verbose "$($sBnrS)" ;
+            $highpkg = $latermodfiles = $null ; 
+            TRY {
+                $error.clear() ;
+                $pltGci=[ordered]@{path ="$($path)\*.nupkg" ; recurse=$true ; ea = 'STOP'} ;
+                write-verbose "get-childitem w`n$(($pltGci|out-string).trim())" ; 
+                $pkgs = get-childitem @pltGci ; 
+                $pkgs = $pkgs | select *,@{name="version";expression={[version]([regex]::match($_.name,$rgxNuPkgFileName).captures[0].groups[1].value)}} | sort version ;
+                if($pkgs){
+                    if($pkgs -is [system.array]){$highpkg = $pkgs[-1]}
+                    else {$highpkg = $pkgs} ; 
+                    write-verbose "$($path):High pkg:`n$(($highpkg |ft -a name,lastwritetime,version|out-string).trim())" ; 
+                    $pltGci=[ordered]@{path =$path ;recurse=$true ;file = $true ; ea = 'STOP'} ;
+                    write-verbose "get-childitem w`n$(($pltGci|out-string).trim())" ; 
+                    $latermodfiles = get-childitem $path -recurse -file |?{$_.extension -notmatch $rgxExcludeExts -AND $_.name -notmatch $rgxexclFiles} | ?{$_.LastWriteTime -gt $highpkg.LastWriteTime} | sort LastWriteTime; 
+                    if($latermodfiles){
+                        $smsg = "`n`n===Module $($path) has files dated *after* last .pkg!:`n" ; 
+                        $smsg += "`n$(($highpkg|ft -a name,lastwritetime,version|out-string).trim())`n" ; 
+                        $smsg += "`n$(($latermodfiles |ft -a name,lastwritetime |out-string).trim())`n`n" ; 
+                        $smsg += "`n===" ; 
+                        write-warning $smsg ; 
+                    } else {
+                        write-verbose "`n(Module $($path) has no post-build updated files)`n`n"
+                    } ; 
+                } ; 
+            } CATCH {
+                $ErrTrapd=$Error[0] ;
+                $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
+                else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                Break  #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
+            } ; 
+            #write-verbose $sBnrS.replace('-v','-^').replace('v-','^-') ;
+        } ; 
+    }  # PROC-E
+    END {} ;
+}
+
+#*------^ test-UnReleasedModuleContent.ps1 ^------
+
 #*------v Uninstall-AllModules.ps1 v------
 function Uninstall-AllModules {
     <#
@@ -1261,14 +1747,14 @@ Remove the -whatif to run a full execution & install.
 
 #*======^ END FUNCTIONS ^======
 
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,get-RepoModulesHighestVersion,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,revert-moduleInstalledRevision,test-UnReleasedModuleContent,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
 
 
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUYGydI2A36DGcQBgFwwHURclY
-# YwCgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU3Wdh6HtYL5X7nxQZ26nLnGY8
+# gh+gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -1283,9 +1769,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTm96HZ
-# 3tfsc0m7DLPb16HDfe+7JTANBgkqhkiG9w0BAQEFAASBgAJjt1NGtPCvLrTiCayy
-# n4l75WJiGBX+7dc7vxRjMu2Nl+P716Wgmzt2HWjIpyTqluf3Uq17XZwcUEaFQU9x
-# T+5PEjYAGwDfvPwgVOv2y6/BrcXPiysG+uKJnUgTtVaDBKhTca2uN0/V+Y07dzYg
-# ySiXwV/yH0RI/TvTGXPEXP3a
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTkQ0QK
+# /8MRVK0r/BmBfeX8n82MtDANBgkqhkiG9w0BAQEFAASBgKSYvHEKgos9O7WYcIyb
+# Mh6qvRqCjI48SL/kGnk0JGGq2NZNx5Uebb7HRUR4qyYu50xVICpls8ta9zE6GUf2
+# 4mUHdaLglAN55PEdKbOTIQe0fddNGHuIY6/29fEVobpHPYqKGMdfP/x9e3ydwAYG
+# LINJ2a8wWvX7cOrDO2GTK3EP
 # SIG # End signature block
