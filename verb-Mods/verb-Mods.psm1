@@ -1,11 +1,11 @@
-﻿# verb-mods.psm1
+﻿# verb-Mods.psm1
 
 
   <#
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.2.0.0
+  Version     : 1.2.1.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -450,7 +450,7 @@ function get-RepoModulesHighestVersion {
     .LINK
     https://github.com/tostka/verb-Mods
     #>
-    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
     PARAM(
         [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
@@ -1151,7 +1151,7 @@ function revert-moduleInstalledRevision {
     .LINK
     [ name related topic(one keyword per topic), or http://|https:// to help, or add the name of 'paired' funcs in the same niche (enable/disable-xxx)]
     #>
-    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     ## [OutputType('bool')] # optional specified output type
     [CmdletBinding()]
     PARAM(
@@ -1231,6 +1231,7 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
+    * 8:59 AM 1/11/2022 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
     * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
@@ -1254,10 +1255,13 @@ function test-UnReleasedModuleContent {
     .EXAMPLE
     PS> (resolve-path c:\sc\verb*) |  test-UnReleasedModuleContent;
     Pipeline example, echo solely modules that need a fresh Build/Release
+    .EXAMPLE
+    PS> gcm -module verb-mods | where verb -eq 'test' | %{get-help $_.name -example}
+    Example locating an installed module, postfiltering the module cmdlets on verb 'test', and returning CBH examples for each cmdlet.
     .LINK
     https://github.com/tostka/verb-Mods
     #>
-    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
     PARAM(
         [Parameter(Position=0,Mandatory=$false,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
@@ -1759,8 +1763,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUVjfbugxJmd47uvp5AdmFXU4M
-# 1qOgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUNSzJ59vqb80F/LhNsmXs92X6
+# 3LSgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -1775,9 +1779,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTVWb0p
-# WVNhTn6JVFvGPjP+4fbQ/zANBgkqhkiG9w0BAQEFAASBgDMrjNpo6xm4mvHPHk0c
-# rK5vNvpaCFGjsx8Nu+m8ah/rtmUhTo68MARwzpJMR5JsQdfrQc9NJ7dLx9yQr4+y
-# GBSR+CKp5Jn/kLwUZ+1Mx/W59wEVPAaB98xXUTX/mtSO9jCeHwMzruMBmwIxC52c
-# H8EUlzfZOap2UXyVP/94RtKA
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRIeNb3
+# J+S2UIU1T/e45pxfqFAxZjANBgkqhkiG9w0BAQEFAASBgJYkNVT6cSpe6LVB53kO
+# EUVtb0jGrQk2g95DsGWDZndY3AsOqjPzTII25WsBjIrXHgvWp4RJqST8tPujzX6f
+# tXdr5gVnwMIm+fyA0WpczZele8WHwfPXGRP4X0MV03kl0g1/YBN2ISGgrWok+c6x
+# dV2HtXx89ACZI5ak1FhTkH5k
 # SIG # End signature block
