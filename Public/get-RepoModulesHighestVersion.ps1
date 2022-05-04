@@ -18,7 +18,8 @@ function get-RepoModulesHighestVersion {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
-    * 4:21 PM 4/21/2022 add: PSv2, PsGet module, backrev support: added -names param (to drive name lookup) ; added code to detec if -Repository is a uncpath (vs repo name), and that drives skip on psv2-missing get-psrepository call, and just sets the specified path as the $RepoSrc for scanning for updated nupkg files, agains the specified Names module name values; Add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
+    * 9:40 AM 4/22/2022 fix: typo in echo
+    * 4:21 PM 4/21/2022 add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
     * 2:02 PM 11/3/2021 init, flipped to verb-mods func
     .DESCRIPTION
     get-RepoModulesHighestVersion.ps1 - Check specified Repository (defaults to $global:localPsRepo) for highest .nupkg verison for each of module directories specified by -Paths.
@@ -42,12 +43,20 @@ function get-RepoModulesHighestVersion {
     .EXAMPLE
     PS> $latestRevs = get-RepoModulesHighestVersion -Names verb-IO -Repository "\\lynmsv10\lync_fs\scripts\sc" -verbose ;
     PS> $latestRevs |ft -a name,lastwritetime,version ;
-    PS> install-Module -ModulePath $lvers.fullname -Global
+    PS> install-Module -ModulePath $latestRevs.fullname -Global
     PSv2-compatible PSGet:install-module supporting approach:
     - as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.
     - The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
     - The resulting highest semantic-version is returned and assigned to the $latestRevs variable, which is summarized in an echo back to console.
     - Finally the $latestRev version fullname is used with the PsGet install-module command, under the -ModulePath, to install the latest version locally on a Psv2 machine.
+    .EXAMPLE
+    PS> $latestRevs = get-RepoModulesHighestVersion -Names verb-IO,verb-logging,verb-text,verb-Network -Repository ((get-psrepository -Name $global:localPSRepo).sourcelocation) -verbose ;
+    PS> $latestRevs |ft -a name,lastwritetime,version ;
+    PS> $latestRevs.fullname ;
+    PS> $latestRevs.fullname | %{write-host "==$($_):" ; install-Module -ModulePath $_ -Global -verbose ; } ;
+    PSv2-compatible PSGet:install-module supporting approach:
+    Psv2-compatible, PsGet:install-module() another simple variant that uses get-PsRepository to populate the inbound UNC path (as this verb-modules module would traditionally be run from a Psv3+ machine, with full PowershellGet support, no reason to have to hand-specify the local PsRepo SourceLocation).
+    Note: PsGet:import-module() isn't written with -ModulePath array support ([string[]]) , so we externally loop it through.
     .LINK
     https://github.com/tostka/verb-Mods
     #>
@@ -102,7 +111,7 @@ function get-RepoModulesHighestVersion {
         # make it flip a UNC path in the $Repository value, into assumption it's the $SourceLocation of the repository (doesn't use get-psrepository to resolve path, just uses it as passed in).
         if( (test-IsUncPath -path $Repository) -AND (test-path $Repository) ){
             $smsg = '-Repository detected to contain a UNC path spec:' ;
-            $smsg += "`nflipping specified Repository into the $RepoSsrc specification" ;
+            $smsg += "`nflipping specified Repository into the `$RepoSrc specification" ;
             write-verbose $smsg ;
             $RepoSrc = $Repository ;
         } else {
