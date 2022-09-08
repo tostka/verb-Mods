@@ -69,7 +69,7 @@ Description = 'Generic module-related functions'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-UnReleasedModuleContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
+FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-RepoModulesHighestVersion','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-UnReleasedModuleContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
@@ -126,8 +126,8 @@ PrivateData = @{
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4EhC1919U2P6zWustrFvlWxV
-# I3ygggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUt4N9JkIwQNsD6Dc7IxAReQk/
+# rTKgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -142,9 +142,9 @@ PrivateData = @{
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBRR9Dai
-# ctJeK/MUYnFuLu4Xf3ZxQzANBgkqhkiG9w0BAQEFAASBgIBoBPb7OPin09DxOmpx
-# SxrR+cHFk7nTOJaauDuO4zx8i6dS6R+nzjAd4J3zbhswTGT3Z0qHmtN6VALVLJH/
-# LMXcAmvMZy0MoMhYA0kcwVKVO/8qvV8smMGI2Y/pEiNpyaz/sV0GHqQTwsQPP37S
-# 7hNCANb+kI3crb0LEkLZSs2M
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSGEyzn
+# ncIbPI6kfr/CgHYmB0iGfDANBgkqhkiG9w0BAQEFAASBgFy6jRGgt/GOtoArOHEJ
+# 4tK38Wfwa8h2L/HUyZk13rlXs0U4Nvr5echOYI/GUk60PEOLPnWJJLxz4EC8kk91
+# hSkyIZPLQ/yE4r0uMIb2de5PYIHSDz6G654j07VC6L61jWQXqCywYviutwpwkap1
+# ihmHXiiTHw8Sd9plae0NWJZk
 # SIG # End signature block
