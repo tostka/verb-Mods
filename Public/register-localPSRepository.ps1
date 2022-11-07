@@ -1,4 +1,4 @@
-#*------v register-localPSRepository.ps1 v------
+﻿#*------v register-localPSRepository.ps1 v------
 function register-localPSRepository {
     <#
     .SYNOPSIS

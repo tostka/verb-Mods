@@ -1,4 +1,4 @@
-#*------v Function find-profileScripts v------
+﻿#*------v Function find-profileScripts v------
 function find-profileScripts {
     <#
     .SYNOPSIS

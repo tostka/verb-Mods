@@ -1,4 +1,4 @@
-#*------v Install-ModulesTin.ps1 v------
+﻿#*------v Install-ModulesTin.ps1 v------
 function Install-ModulesTin {
     <#
     .SYNOPSIS

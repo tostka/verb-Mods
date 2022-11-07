@@ -1,4 +1,4 @@
-#*------v Function Disconnect-PssBroken v------
+﻿#*------v Function Disconnect-PssBroken v------
 Function Disconnect-PssBroken {
     <#
     .SYNOPSIS

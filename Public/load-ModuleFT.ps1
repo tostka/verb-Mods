@@ -1,4 +1,4 @@
-#*------v load-ModuleFT.ps1 v------
+﻿#*------v load-ModuleFT.ps1 v------
 function load-ModuleFT {
     <#
     .SYNOPSIS

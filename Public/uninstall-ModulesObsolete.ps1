@@ -1,4 +1,4 @@
-#*------v uninstall-ModulesObsolete.ps1 v------
+﻿#*------v uninstall-ModulesObsolete.ps1 v------
 function uninstall-ModulesObsolete {
     <#
     .SYNOPSIS

@@ -1,4 +1,4 @@
-#*------v Function Uninstall-AllModules v------
+﻿#*------v Function Uninstall-AllModules v------
 function Uninstall-AllModules {
     <#
 .SYNOPSIS

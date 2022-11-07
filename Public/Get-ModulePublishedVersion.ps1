@@ -1,4 +1,4 @@
-#*------v Get-ModulePublishedVersion.ps1 v------
+﻿#*------v Get-ModulePublishedVersion.ps1 v------
 function Get-ModulePublishedVersion {
     <#
     .SYNOPSIS

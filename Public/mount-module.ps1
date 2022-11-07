@@ -1,4 +1,4 @@
-#*------v mount-module.ps1 v------
+﻿#*------v mount-module.ps1 v------
 function mount-Module {
     <#
     .SYNOPSIS

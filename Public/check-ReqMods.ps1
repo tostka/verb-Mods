@@ -1,4 +1,4 @@
-#*------v Function check-ReqMods v------
+﻿#*------v Function check-ReqMods v------
 function check-ReqMods {
     <#
     .SYNOPSIS
