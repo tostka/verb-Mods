@@ -48,7 +48,6 @@ Get-ModulePublishedVersion:ob
 Get-ModulePublishedVersion:PipelineVariable
 Get-ModulePublishedVersion:pv
 get-RepoModulesHighestVersion:Paths
-get-RepoModulesHighestVersion:Names
 get-RepoModulesHighestVersion:Repository
 get-RepoModulesHighestVersion:OutObject
 get-RepoModulesHighestVersion:Verbose

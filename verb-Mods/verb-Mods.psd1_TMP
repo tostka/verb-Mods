@@ -12,7 +12,7 @@
 RootModule = 'verb-Mods.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.2.2'
+ModuleVersion = '1.3.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,7 +69,7 @@ Description = 'Generic module-related functions'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-UnReleasedModuleContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
+FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-ModuleRecentPublishedRevisions','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-UnReleasedModuleContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
@@ -148,5 +148,7 @@ PrivateData = @{
 # VG1HZy8oFh8yM1SuGwDZuHsjqbZRZmKo8p3In2hzsv8lwc0QjyVvC+EVgFCp9aYM
 # SmD43H5osXwWRz1tcYwVpNfb
 # SIG # End signature block
+
+
 
 

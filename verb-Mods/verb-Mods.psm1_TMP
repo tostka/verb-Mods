@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.2.2.0
+  Version     : 1.3.0.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -51,7 +51,7 @@ function check-ReqMods {
     Github      : https://github.com/tostka
     Tags        : Powershell,Module,Utility
     REVISIONS
-    * 8:01 AM 12/1/2020 added missing function banners
+    * 8:01 AM 12/1.3.00 added missing function banners
     * 1:11 PM 4/7/2020 orig vers undoc'd - sometime in last 2-3yrs, init with CBH
     .DESCRIPTION
     check-ReqMods() - Verifies that specified commands exist in function: (are loaded) or get-command (registered via installed .psd modules)
@@ -144,7 +144,7 @@ function find-profileScripts {
     AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
     AddedTwitter: URL
     REVISIONS
-    * 10:16 AM 12/1/2020 cleanedup missing func decl line
+    * 10:16 AM 12/1.3.00 cleanedup missing func decl line
     .DESCRIPTION
     find-profileScripts.ps1 - Reports on local Powershell profiles
     .OUTPUTS
@@ -413,6 +413,123 @@ Author      : Todd Kadrie
 #*------^ Get-ModulePublishedVersion.ps1 ^------
 
 
+#*------v get-ModuleRecentPublishedRevisions.ps1 v------
+function get-ModuleRecentPublishedRevisions {
+    <#
+    .SYNOPSIS
+    get-ModuleRecentPublishedRevisions.ps1 - Get the most recent -Limit (5) PSRepostory-published .Nupkg revisions of the specified module.
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2022-12-08
+    FileName    : get-ModuleRecentPublishedRevisions.ps1
+    License     : MIT License
+    Copyright   : (c) 2022 Todd Kadrie
+    Github      : https://github.com/tostka/verb-mod
+    Tags        : Powershell,Module,Maintenance
+    AddedCredit : REFERENCE
+    AddedWebsite: URL
+    AddedTwitter: URL
+    REVISIONS
+    * 10:33 AM 12/8/2022 init, flipped to verb-dev func
+    .DESCRIPTION
+    get-ModuleRecentPublishedRevisions.ps1 - get-ModuleRecentPublishedRevisions.ps1 - Get the most recent -Limit (5) PSRepostory-published .Nupkg revisions of the specified module.
+    This relies on a populated profile/global $localPsRepo value, which should contain the name of the local repository.
+    
+    N.B. Should be able to rely on find-module to produce this info, but I find that gci'ing the PSRepository.Source path more consistently & quickly returns results (with a simple file share Repository). 
+    
+    .PARAMETER Name
+    [string] Module Name[-Name modulename]
+    .PARAMETER Repository
+    [string]Repository to be installed from (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]
+    .PARAMETER Limit
+    Number of recent revisions to return (defaults to 5)[-Limit 10]
+    .INPUTS
+    None. Does not accepted piped input.(.NET types, can add description)
+    .OUTPUTS
+    PSObject of fullname & lastwritetime for the matched Repository nupkg objects
+    .EXAMPLE
+    PS> $whatif = $true ; 
+    PS> $modname = 'verb-io' ; 
+    PS> write-verbose "Get most recent published .nupkg file information for named module on local Repository & capture the output to a variable" ; 
+    PS> $revs = get-ModuleRecentPublishedRevisions -name $modname ;
+    PS> write-verbose "Output the most recent two revisionss information to console" ; 
+    PS> $revs[-2..-1] | ft -a ; 
+    PS> write-verbose "Regex the version # of the second-most-recent release" ; 
+    PS> $ReqVers = [regex]::match($revs[-2].fullname,'(\d+\.\d+\.\d+)').captures[0].groups[1].value ;
+    PS> write-verbose "Uninstall *allVersions* of the module locally" ; 
+    PS> uninstall-module -name $modname -AllVersions -force -whatif:$($whatif) ; 
+    PS> write-verbose "Install the 2nd-most-recent release to CurrentUser scope, with force/AllowClobber." ; 
+    PS> install-module -name $modname -RequiredVersion $reqvers -Repository $localpsrepo -force -allowclobber -scope CurrentUser -whatif:$($whatif) ;
+    PS> write-verbose "Delete the most recent published revision .nupkg file from the PSRepository.Source directory" ; 
+    PS> gci -path $revs[-1].fullname | remove-item -whatif:$($whatif) ;
+    
+        (retrieving most recent 5 revisions in Repo for verb-io...)
+        11:13:10:5 most recent lyncRepo-published revisions of verb-io:
+        FullName                         LastWriteTime
+        --------                         -------------
+        \\REPO\SHARE\verb-IO.2.0.3.nupkg 5/23/2022 2:14:08 PM
+        \\REPO\SHARE\verb-IO.3.0.0.nupkg 6/2/2022 11:02:33 AM
+        \\REPO\SHARE\verb-IO.3.0.1.nupkg 7/21.3.02 1:39:50 PM
+        \\REPO\SHARE\verb-IO.3.1.0.nupkg 8/30/2022 5:00:05 PM
+        \\REPO\SHARE\verb-IO.4.0.0.nupkg 9/8/2022 4:08:31 PM
+
+        (returning object to pipeline)
+
+        FullName                                          LastWriteTime
+        --------                                          -------------
+        \\REPO\SHARE\verb-IO.3.1.0.nupkg 8/30/2022 5:00:05 PM
+        \\REPO\SHARE\verb-IO.4.0.0.nupkg 9/8/2022 4:08:31 PM
+
+        What if: Performing the operation "Uninstall-Module" on target "Version '4.0.0' of module 'verb-IO'".
+        What if: Performing the operation "Install-Module" on target "Version '3.1.0' of module 'verb-IO'".
+        What if: Performing the operation "Remove File" on target "\\REPO\SHARE\verb-IO.4.0.0.nupkg".     
+    
+    Above demos remediating around a recent damaged revision, clearing all local versions, installing the prior revision from the PSRepo, and clearing the last revision .nupkg file from the PSRepo.
+    .LINK
+    https://github.com/tostka/verb-mods
+    .LINK
+    #>
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    ## [OutputType('bool')] # optional specified output type
+    [CmdletBinding()]
+    PARAM(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Module Name[-Name modulename]")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name,
+        [Parameter(HelpMessage="[string]Repository to be installed from (defaults to `$global:localPsRepo/profile value) Name[-Repository SomeRepo]")]
+        [string]$Repository=$localPsRepo,
+        [Parameter(HelpMessage="Number of recent revisions to return (defaults to 5)[-Limit 10]")]
+        [int]$Limit = 5
+    ) ;
+    $verbose = ($VerbosePreference -eq "Continue") ;
+    TRY {
+        $error.clear() ;
+        $pltGrpo=[ordered]@{name = $localpsrepo ; ErrorAction='STOP'} ;
+        $pltGCI=[ordered]@{path="$((get-psrepository @pltGrpo).SourceLocation)\$($Name)*.nupkg" ; ErrorAction='STOP'} ;
+        write-host "(retrieving most recent $($Limit) revisions in Repo for $($Name)...)" ;
+        write-verbose "get-psrepository w`n$(($pltGrpo|out-string).trim())" ;
+        write-verbose "gci w`n$(($pltGCI|out-string).trim())" ;
+        $Allvers = gci @pltGCI | sort lastwriteTime ;
+        $smsg = "$($Limit) most recent $($Repository)-published revisions of $($Name):`n$(($Allvers | select -last $Limit | ft -a fullname,lastwritetime|out-string).trim())" ; 
+        $smsg += "`n`n(returning object to pipeline)" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        #Levels:Error|Warn|Info|H1|H2|H3|Debug|Verbose|Prompt
+        $Allvers | select -last $Limit | select fullname,lastwritetime | write-output ; 
+    } CATCH {
+        $ErrTrapd=$Error[0] ;
+        $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+        write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+        Break ;
+    } ;
+}
+
+#*------^ get-ModuleRecentPublishedRevisions.ps1 ^------
+
+
 #*------v get-RepoModulesHighestVersion.ps1 v------
 function get-RepoModulesHighestVersion {
     <#
@@ -434,7 +551,7 @@ function get-RepoModulesHighestVersion {
     AddedTwitter: URL
     REVISIONS
     * 9:40 AM 4/22/2022 fix: typo in echo
-    * 4:21 PM 4/21/2022 add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
+    * 4:21 PM 4/21.3.02 add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
     * 2:02 PM 11/3/2021 init, flipped to verb-mods func
     .DESCRIPTION
     get-RepoModulesHighestVersion.ps1 - Check specified Repository (defaults to $global:localPsRepo) for highest .nupkg verison for each of module directories specified by -Paths.
@@ -782,7 +899,7 @@ function load-Module {
     AddedWebsite:	URL
     AddedTwitter:	URL
     REVISIONS
-    * 10:17 AM 10/1/2020 added import-module verbose tmp supporess
+    * 10:17 AM 10/1.3.00 added import-module verbose tmp supporess
     * 7:29 AM 1/29/2020 added pshelp, version etc (copying into verb-dev)
     * 8/28/2019 init
     .DESCRIPTION
@@ -854,7 +971,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
-    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
+    * 10:18 AM 10/1.3.00 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
@@ -1001,7 +1118,7 @@ function mount-Module {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell
     REVISIONS
-    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
+    * 10:18 AM 10/1.3.00 added import-module tmp verbose suppress
     * 3:42 PM 9/28/2020 fixed that trailing-$ typo again
     * 7:42 AM 9/25/2020 duped from admin-prof.ps1 -> verb-mods
     * 4:31 PM 9/24/2020 init
@@ -1121,7 +1238,7 @@ function register-localPSRepository {
     Github      : https://github.com/tostka/verb-Mods
     Tags        : Powershell
     REVISIONS
-    * 8:36 AM 12/1/2020 init
+    * 8:36 AM 12/1.3.00 init
     .DESCRIPTION
     register-localPSRepository.ps1 - Confirms, or manually-registers, local PSRepository, as specified by profile $localPSRepo variable. 
     .PARAMETER  Repository
@@ -1332,7 +1449,7 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
-    * 8:59 AM 1/11/2022 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
+    * 8:59 AM 1/11.3.02 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
     * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
@@ -1700,7 +1817,7 @@ Function update-PSPowerShellGetLegacy {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell,Module,PowershellGet,Legacy
     REVISIONS
-    * 4:14 PM 12/1/2020 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
+    * 4:14 PM 12/1.3.00 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
     * 10:37 AM 11/5/2020 init
     .DESCRIPTION
     update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
@@ -1862,7 +1979,7 @@ Remove the -whatif to run a full execution & install.
 
 #*======^ END FUNCTIONS ^======
 
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,get-RepoModulesHighestVersion,test-IsUncPath,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,revert-moduleInstalledRevision,test-UnReleasedModuleContent,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,get-ModuleRecentPublishedRevisions,get-RepoModulesHighestVersion,test-IsUncPath,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,revert-moduleInstalledRevision,test-UnReleasedModuleContent,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
 
 
 
