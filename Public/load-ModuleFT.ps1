@@ -15,6 +15,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
+    * 9:26 AM 12/14/2022 rplc test-path [obj]:[name] with gcm:  where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
     * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
@@ -117,14 +118,18 @@ function load-ModuleFT {
                 } ; 
             } ; 
         } ;
-        if(!(test-path function:$tModCmdlet)){
+        #if(!(test-path function:$tModCmdlet)){
+        # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+        if(!(get-command -name $tModCmdlet -ea 0 )){
             write-warning -verbose:$true  "UNABLE TO VALIDATE PRESENCE OF $tModCmdlet`nfailing through to `$backInclDir .ps1 version" ;
             $sLoad = (join-path -path $backInclDir -childpath "$($tModName).ps1") ;
             if (Test-Path $sLoad) {
                 Write-Verbose -verbose:$true ((Get-Date).ToString("HH:mm:ss") + "LOADING:" + $sLoad) ;
                 . $sLoad ;
                 if ($showdebug) { Write-Verbose -verbose "Post $sLoad" };
-                if(!(test-path function:$tModCmdlet)){
+                #if(!(test-path function:$tModCmdlet)){
+                # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+                if(!(get-command -name $tModCmdlet -ea 0 )){
                     write-warning "$((get-date).ToString('HH:mm:ss')):FAILED TO CONFIRM `$tModCmdlet:$($tModCmdlet) FOR $($tModName)" ;
                 } else {write-verbose -verbose:$true  "(confirmed $tModName loaded: $tModCmdlet present)"} ;   
             } else {

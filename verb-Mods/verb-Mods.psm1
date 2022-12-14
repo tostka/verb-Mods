@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.3.0.0
+  Version     : 1.4.0.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -51,7 +51,7 @@ function check-ReqMods {
     Github      : https://github.com/tostka
     Tags        : Powershell,Module,Utility
     REVISIONS
-    * 8:01 AM 12/1.3.00 added missing function banners
+    * 8:01 AM 12/1/2020 added missing function banners
     * 1:11 PM 4/7/2020 orig vers undoc'd - sometime in last 2-3yrs, init with CBH
     .DESCRIPTION
     check-ReqMods() - Verifies that specified commands exist in function: (are loaded) or get-command (registered via installed .psd modules)
@@ -144,7 +144,7 @@ function find-profileScripts {
     AddedWebsite: https://community.idera.com/database-tools/powershell/powertips/b/tips/posts/checking-profile-scripts-part-2
     AddedTwitter: URL
     REVISIONS
-    * 10:16 AM 12/1.3.00 cleanedup missing func decl line
+    * 10:16 AM 12/1/2020 cleanedup missing func decl line
     .DESCRIPTION
     find-profileScripts.ps1 - Reports on local Powershell profiles
     .OUTPUTS
@@ -472,7 +472,7 @@ function get-ModuleRecentPublishedRevisions {
         --------                         -------------
         \\REPO\SHARE\verb-IO.2.0.3.nupkg 5/23/2022 2:14:08 PM
         \\REPO\SHARE\verb-IO.3.0.0.nupkg 6/2/2022 11:02:33 AM
-        \\REPO\SHARE\verb-IO.3.0.1.nupkg 7/21.3.02 1:39:50 PM
+        \\REPO\SHARE\verb-IO.3.0.1.nupkg 7/21/2022 1:39:50 PM
         \\REPO\SHARE\verb-IO.3.1.0.nupkg 8/30/2022 5:00:05 PM
         \\REPO\SHARE\verb-IO.4.0.0.nupkg 9/8/2022 4:08:31 PM
 
@@ -551,7 +551,7 @@ function get-RepoModulesHighestVersion {
     AddedTwitter: URL
     REVISIONS
     * 9:40 AM 4/22/2022 fix: typo in echo
-    * 4:21 PM 4/21.3.02 add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
+    * 4:21 PM 4/21/2022 add: test-isUNCPath () ; PSv2-compatible PSGet:install-module supporting approach:  as PsV2 lacks PowershellGet support, this specifies the PSRepository.SourceLocation property as the -Repository input.  The script then skips the normal get-PSRepository resolution, and uses the specified UNC path, and the -Names (array of module names), to target variant revisions on the Repository.
     * 2:02 PM 11/3/2021 init, flipped to verb-mods func
     .DESCRIPTION
     get-RepoModulesHighestVersion.ps1 - Check specified Repository (defaults to $global:localPsRepo) for highest .nupkg verison for each of module directories specified by -Paths.
@@ -899,7 +899,7 @@ function load-Module {
     AddedWebsite:	URL
     AddedTwitter:	URL
     REVISIONS
-    * 10:17 AM 10/1.3.00 added import-module verbose tmp supporess
+    * 10:17 AM 10/1/2020 added import-module verbose tmp supporess
     * 7:29 AM 1/29/2020 added pshelp, version etc (copying into verb-dev)
     * 8/28/2019 init
     .DESCRIPTION
@@ -971,7 +971,8 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
-    * 10:18 AM 10/1.3.00 added import-module tmp verbose suppress
+    * 9:26 AM 12/14/2022 rplc test-path [obj]:[name] with gcm:  where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
     .DESCRIPTION
@@ -1073,14 +1074,18 @@ function load-ModuleFT {
                 } ; 
             } ; 
         } ;
-        if(!(test-path function:$tModCmdlet)){
+        #if(!(test-path function:$tModCmdlet)){
+        # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+        if(!(get-command -name $tModCmdlet -ea 0 )){
             write-warning -verbose:$true  "UNABLE TO VALIDATE PRESENCE OF $tModCmdlet`nfailing through to `$backInclDir .ps1 version" ;
             $sLoad = (join-path -path $backInclDir -childpath "$($tModName).ps1") ;
             if (Test-Path $sLoad) {
                 Write-Verbose -verbose:$true ((Get-Date).ToString("HH:mm:ss") + "LOADING:" + $sLoad) ;
                 . $sLoad ;
                 if ($showdebug) { Write-Verbose -verbose "Post $sLoad" };
-                if(!(test-path function:$tModCmdlet)){
+                #if(!(test-path function:$tModCmdlet)){
+                # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+                if(!(get-command -name $tModCmdlet -ea 0 )){
                     write-warning "$((get-date).ToString('HH:mm:ss')):FAILED TO CONFIRM `$tModCmdlet:$($tModCmdlet) FOR $($tModName)" ;
                 } else {write-verbose -verbose:$true  "(confirmed $tModName loaded: $tModCmdlet present)"} ;   
             } else {
@@ -1118,7 +1123,7 @@ function mount-Module {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell
     REVISIONS
-    * 10:18 AM 10/1.3.00 added import-module tmp verbose suppress
+    * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 3:42 PM 9/28/2020 fixed that trailing-$ typo again
     * 7:42 AM 9/25/2020 duped from admin-prof.ps1 -> verb-mods
     * 4:31 PM 9/24/2020 init
@@ -1238,7 +1243,7 @@ function register-localPSRepository {
     Github      : https://github.com/tostka/verb-Mods
     Tags        : Powershell
     REVISIONS
-    * 8:36 AM 12/1.3.00 init
+    * 8:36 AM 12/1/2020 init
     .DESCRIPTION
     register-localPSRepository.ps1 - Confirms, or manually-registers, local PSRepository, as specified by profile $localPSRepo variable. 
     .PARAMETER  Repository
@@ -1449,7 +1454,7 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
-    * 8:59 AM 1/11.3.02 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
+    * 8:59 AM 1/11/2022 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
     * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
@@ -1817,7 +1822,7 @@ Function update-PSPowerShellGetLegacy {
     Github      : https://github.com/tostka/verb-XXX
     Tags        : Powershell,Module,PowershellGet,Legacy
     REVISIONS
-    * 4:14 PM 12/1.3.00 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
+    * 4:14 PM 12/1/2020 debugged to publish, also succ used the install .ps1 to install result into FE! ; ; shifted the #Requires -version 5 inline ('multiple requires vers' error when w/in module), also updated CBH to include demo code to copy the localPSRepoPath cached version locally (for either CurrUser or AllUsers)
     * 10:37 AM 11/5/2020 init
     .DESCRIPTION
     update-PSPowerShellGetLegacy.ps1 - Manually update repository location of Legacy powershellGet mod support (no native PSG support for Psv3-4)
@@ -1987,8 +1992,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUemks0/WS/PVqjbuT46CHYWjH
-# HGqgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUSfwMDF9yLKz0ZjR99D1Pr+2k
+# drSgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -2003,9 +2008,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBTNd3po
-# IyWtdQHQaNbUrYhPA4boqjANBgkqhkiG9w0BAQEFAASBgF8h3EcXyAc/H1pKH9Nm
-# PknubO/gx6Jm4ephlf5nJgIGte/kNwjXPdg+lPMylCzpOE5B5KpcjYwVJc8bYeTE
-# 4p+acQVwrn8VxOvtjNgLeMLGxOrHS/dRLY+59b0/X397ZgL3x0KfuhIoCEPev0AT
-# mDR11JIGK/6YEQ4pBZf8YxaT
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBT/74Y6
+# oGQQftq/++OYOjnFYRL3hjANBgkqhkiG9w0BAQEFAASBgI6lZaVU/fNRTLB/3Lxu
+# A1wnpCMcP3APcFgWM6+aeChDqn4KaLYbBCoz+NB37Bnh1tqx25ROtVdywad61p50
+# 0hppA26K8VTs9QrZkoYGsyPYbwer+LtKqucjAlziJ1U/tRVHonqra2LUHWgRquEu
+# COebeS11433BW0iRyaBDRz/f
 # SIG # End signature block
