@@ -1,15 +1,15 @@
-﻿#*------v Function test-UnReleasedModuleContent v------
-function test-UnReleasedModuleContent {
+﻿#*------v Function test-ModuleUnReleasedContent v------
+function test-ModuleUnReleasedContent {
     <#
     .SYNOPSIS
-    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    test-ModuleUnReleasedContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
     .NOTES
     Version     : 1.0.0
     Author      : Todd Kadrie
     Website     : http://www.toddomation.com
     Twitter     : @tostka / http://twitter.com/tostka
     CreatedDate : 2021-11-03
-    FileName    : test-UnReleasedModuleContent.ps1
+    FileName    : test-ModuleUnReleasedContent.ps1
     License     : MIT License
     Copyright   : (c) 2021 Todd Kadrie
     Github      : https://github.com/tostka/verb-mod
@@ -18,11 +18,12 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
+    * 10:40 AM 2/3/2023 ren: test-UnReleasedModuleContent -> test-ModuleUnReleasedContent ; add: alias: test-ModuleBuild (hard to find/recall orig name, moudle should be in 2nd pos)
     * 8:59 AM 1/11/2022 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
     * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
-    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    test-ModuleUnReleasedContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
     ..PARAMETER Paths
     Module source paths to be processed (defaults to expanding my `$GIT_ReposRoot profile variable into array of module repos w names prefixed 'verbs*')[-paths 'c:\path-to\','c:\path2-to']
     .PARAMETER Repository
@@ -37,10 +38,10 @@ function test-UnReleasedModuleContent {
     None. Returns no objects or output (.NET types)
     .EXAMPLE
     PS> $Paths += (resolve-path c:\sc\verb*) ;
-    PS> test-UnReleasedModuleContent -Paths $Paths -verbose ; 
+    PS> test-ModuleUnReleasedContent -Paths $Paths -verbose ; 
     Run a pass against all paths below the c:\sc\ directory, with directory names starting with verb*, with verbose output.
     .EXAMPLE
-    PS> (resolve-path c:\sc\verb*) |  test-UnReleasedModuleContent;
+    PS> (resolve-path c:\sc\verb*) |  test-ModuleUnReleasedContent;
     Pipeline example, echo solely modules that need a fresh Build/Release
     .EXAMPLE
     PS> gcm -module verb-mods | where verb -eq 'test' | %{get-help $_.name -example}
@@ -48,8 +49,9 @@ function test-UnReleasedModuleContent {
     .LINK
     https://github.com/tostka/verb-Mods
     #>
-    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("(lyn|bcc|spb|adl)ms6(4|5)(0|1).(china|global)\.ad\.toro\.com")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
+    [Alias('test-UnReleasedModuleContent','test-ModuleBuild')]
     PARAM(
         [Parameter(Position=0,Mandatory=$false,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
         #[ValidateScript({Test-Path $_})]
@@ -114,4 +116,4 @@ function test-UnReleasedModuleContent {
     }  # PROC-E
     END {} ;
 } ; 
-#*------^ END Function test-UnReleasedModuleContent ^------
+#*------^ END Function test-ModuleUnReleasedContent ^------
