@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.2.2.0
+  Version     : 1.4.1.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -411,6 +411,123 @@ Author      : Todd Kadrie
 }
 
 #*------^ Get-ModulePublishedVersion.ps1 ^------
+
+
+#*------v get-ModuleRecentPublishedRevisions.ps1 v------
+function get-ModuleRecentPublishedRevisions {
+    <#
+    .SYNOPSIS
+    get-ModuleRecentPublishedRevisions.ps1 - Get the most recent -Limit (5) PSRepostory-published .Nupkg revisions of the specified module.
+    .NOTES
+    Version     : 1.0.0
+    Author      : Todd Kadrie
+    Website     : http://www.toddomation.com
+    Twitter     : @tostka / http://twitter.com/tostka
+    CreatedDate : 2022-12-08
+    FileName    : get-ModuleRecentPublishedRevisions.ps1
+    License     : MIT License
+    Copyright   : (c) 2022 Todd Kadrie
+    Github      : https://github.com/tostka/verb-mod
+    Tags        : Powershell,Module,Maintenance
+    AddedCredit : REFERENCE
+    AddedWebsite: URL
+    AddedTwitter: URL
+    REVISIONS
+    * 10:33 AM 12/8/2022 init, flipped to verb-dev func
+    .DESCRIPTION
+    get-ModuleRecentPublishedRevisions.ps1 - get-ModuleRecentPublishedRevisions.ps1 - Get the most recent -Limit (5) PSRepostory-published .Nupkg revisions of the specified module.
+    This relies on a populated profile/global $localPsRepo value, which should contain the name of the local repository.
+    
+    N.B. Should be able to rely on find-module to produce this info, but I find that gci'ing the PSRepository.Source path more consistently & quickly returns results (with a simple file share Repository). 
+    
+    .PARAMETER Name
+    [string] Module Name[-Name modulename]
+    .PARAMETER Repository
+    [string]Repository to be installed from (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]
+    .PARAMETER Limit
+    Number of recent revisions to return (defaults to 5)[-Limit 10]
+    .INPUTS
+    None. Does not accepted piped input.(.NET types, can add description)
+    .OUTPUTS
+    PSObject of fullname & lastwritetime for the matched Repository nupkg objects
+    .EXAMPLE
+    PS> $whatif = $true ; 
+    PS> $modname = 'verb-io' ; 
+    PS> write-verbose "Get most recent published .nupkg file information for named module on local Repository & capture the output to a variable" ; 
+    PS> $revs = get-ModuleRecentPublishedRevisions -name $modname ;
+    PS> write-verbose "Output the most recent two revisionss information to console" ; 
+    PS> $revs[-2..-1] | ft -a ; 
+    PS> write-verbose "Regex the version # of the second-most-recent release" ; 
+    PS> $ReqVers = [regex]::match($revs[-2].fullname,'(\d+\.\d+\.\d+)').captures[0].groups[1].value ;
+    PS> write-verbose "Uninstall *allVersions* of the module locally" ; 
+    PS> uninstall-module -name $modname -AllVersions -force -whatif:$($whatif) ; 
+    PS> write-verbose "Install the 2nd-most-recent release to CurrentUser scope, with force/AllowClobber." ; 
+    PS> install-module -name $modname -RequiredVersion $reqvers -Repository $localpsrepo -force -allowclobber -scope CurrentUser -whatif:$($whatif) ;
+    PS> write-verbose "Delete the most recent published revision .nupkg file from the PSRepository.Source directory" ; 
+    PS> gci -path $revs[-1].fullname | remove-item -whatif:$($whatif) ;
+    
+        (retrieving most recent 5 revisions in Repo for verb-io...)
+        11:13:10:5 most recent lyncRepo-published revisions of verb-io:
+        FullName                         LastWriteTime
+        --------                         -------------
+        \\REPO\SHARE\verb-IO.2.0.3.nupkg 5/23/2022 2:14:08 PM
+        \\REPO\SHARE\verb-IO.3.0.0.nupkg 6/2/2022 11:02:33 AM
+        \\REPO\SHARE\verb-IO.3.0.1.nupkg 7/21/2022 1:39:50 PM
+        \\REPO\SHARE\verb-IO.3.1.0.nupkg 8/30/2022 5:00:05 PM
+        \\REPO\SHARE\verb-IO.4.0.0.nupkg 9/8/2022 4:08:31 PM
+
+        (returning object to pipeline)
+
+        FullName                                          LastWriteTime
+        --------                                          -------------
+        \\REPO\SHARE\verb-IO.3.1.0.nupkg 8/30/2022 5:00:05 PM
+        \\REPO\SHARE\verb-IO.4.0.0.nupkg 9/8/2022 4:08:31 PM
+
+        What if: Performing the operation "Uninstall-Module" on target "Version '4.0.0' of module 'verb-IO'".
+        What if: Performing the operation "Install-Module" on target "Version '3.1.0' of module 'verb-IO'".
+        What if: Performing the operation "Remove File" on target "\\REPO\SHARE\verb-IO.4.0.0.nupkg".     
+    
+    Above demos remediating around a recent damaged revision, clearing all local versions, installing the prior revision from the PSRepo, and clearing the last revision .nupkg file from the PSRepo.
+    .LINK
+    https://github.com/tostka/verb-mods
+    .LINK
+    #>
+    # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
+    ## [OutputType('bool')] # optional specified output type
+    [CmdletBinding()]
+    PARAM(
+        [Parameter(Position=0,Mandatory=$True,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true,HelpMessage="Module Name[-Name modulename]")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name,
+        [Parameter(HelpMessage="[string]Repository to be installed from (defaults to `$global:localPsRepo/profile value) Name[-Repository SomeRepo]")]
+        [string]$Repository=$localPsRepo,
+        [Parameter(HelpMessage="Number of recent revisions to return (defaults to 5)[-Limit 10]")]
+        [int]$Limit = 5
+    ) ;
+    $verbose = ($VerbosePreference -eq "Continue") ;
+    TRY {
+        $error.clear() ;
+        $pltGrpo=[ordered]@{name = $localpsrepo ; ErrorAction='STOP'} ;
+        $pltGCI=[ordered]@{path="$((get-psrepository @pltGrpo).SourceLocation)\$($Name)*.nupkg" ; ErrorAction='STOP'} ;
+        write-host "(retrieving most recent $($Limit) revisions in Repo for $($Name)...)" ;
+        write-verbose "get-psrepository w`n$(($pltGrpo|out-string).trim())" ;
+        write-verbose "gci w`n$(($pltGCI|out-string).trim())" ;
+        $Allvers = gci @pltGCI | sort lastwriteTime ;
+        $smsg = "$($Limit) most recent $($Repository)-published revisions of $($Name):`n$(($Allvers | select -last $Limit | ft -a fullname,lastwritetime|out-string).trim())" ; 
+        $smsg += "`n`n(returning object to pipeline)" ; 
+        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } 
+        else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+        #Levels:Error|Warn|Info|H1|H2|H3|Debug|Verbose|Prompt
+        $Allvers | select -last $Limit | select fullname,lastwritetime | write-output ; 
+    } CATCH {
+        $ErrTrapd=$Error[0] ;
+        $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+        write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+        Break ;
+    } ;
+}
+
+#*------^ get-ModuleRecentPublishedRevisions.ps1 ^------
 
 
 #*------v get-RepoModulesHighestVersion.ps1 v------
@@ -854,6 +971,7 @@ function load-ModuleFT {
     Github      : https://github.com/tostka
     AddedCredit : REFERENCE
     REVISIONS
+    * 9:26 AM 12/14/2022 rplc test-path [obj]:[name] with gcm:  where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
     * 10:18 AM 10/1/2020 added import-module tmp verbose suppress
     * 12:34 PM 8/4/2020 fixed typo #68, missing $ on vari name
     * 2:57 PM 4/29/2020 port from code in use in .ps1's & modules
@@ -956,14 +1074,18 @@ function load-ModuleFT {
                 } ; 
             } ; 
         } ;
-        if(!(test-path function:$tModCmdlet)){
+        #if(!(test-path function:$tModCmdlet)){
+        # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+        if(!(get-command -name $tModCmdlet -ea 0 )){
             write-warning -verbose:$true  "UNABLE TO VALIDATE PRESENCE OF $tModCmdlet`nfailing through to `$backInclDir .ps1 version" ;
             $sLoad = (join-path -path $backInclDir -childpath "$($tModName).ps1") ;
             if (Test-Path $sLoad) {
                 Write-Verbose -verbose:$true ((Get-Date).ToString("HH:mm:ss") + "LOADING:" + $sLoad) ;
                 . $sLoad ;
                 if ($showdebug) { Write-Verbose -verbose "Post $sLoad" };
-                if(!(test-path function:$tModCmdlet)){
+                #if(!(test-path function:$tModCmdlet)){
+                # where we've renamed functions, and aliased priors, this needs to gcm broadly, not confirm on function names, or it false-positive breaks
+                if(!(get-command -name $tModCmdlet -ea 0 )){
                     write-warning "$((get-date).ToString('HH:mm:ss')):FAILED TO CONFIRM `$tModCmdlet:$($tModCmdlet) FOR $($tModName)" ;
                 } else {write-verbose -verbose:$true  "(confirmed $tModName loaded: $tModCmdlet present)"} ;   
             } else {
@@ -1312,18 +1434,18 @@ function revert-moduleInstalledRevision {
 #*------^ revert-ModuleInstalledRevision.ps1 ^------
 
 
-#*------v test-UnReleasedModuleContent.ps1 v------
-function test-UnReleasedModuleContent {
+#*------v test-ModuleUnReleasedContent.ps1 v------
+function test-ModuleUnReleasedContent {
     <#
     .SYNOPSIS
-    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    test-ModuleUnReleasedContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
     .NOTES
     Version     : 1.0.0
     Author      : Todd Kadrie
     Website     : http://www.toddomation.com
     Twitter     : @tostka / http://twitter.com/tostka
     CreatedDate : 2021-11-03
-    FileName    : test-UnReleasedModuleContent.ps1
+    FileName    : test-ModuleUnReleasedContent.ps1
     License     : MIT License
     Copyright   : (c) 2021 Todd Kadrie
     Github      : https://github.com/tostka/verb-mod
@@ -1332,11 +1454,12 @@ function test-UnReleasedModuleContent {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
+    * 10:40 AM 2/3/2023 ren: test-UnReleasedModuleContent -> test-ModuleUnReleasedContent ; add: alias: test-ModuleBuild (hard to find/recall orig name, moudle should be in 2nd pos)
     * 8:59 AM 1/11/2022 added example 3, for quick CBH example dumps of targeted cmdlets in a known module.
     * 10:22 AM 12/2/2021 implment default use of $global:GIT_REPOSROOT, if present; flipped $paths, non-mandetory, and post test pre-run in the proceses block (make it run wo manual param's needed)
     * 1:12 PM 11/3/2021init, flipped to verb-mods func
     .DESCRIPTION
-    test-UnReleasedModuleContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
+    test-ModuleUnReleasedContent.ps1 - Check module source directory for component files dated after the most recent version .nupkg.LastWriteTime (e.g. output list of modules that need a fresh Build/Release)
     ..PARAMETER Paths
     Module source paths to be processed (defaults to expanding my `$GIT_ReposRoot profile variable into array of module repos w names prefixed 'verbs*')[-paths 'c:\path-to\','c:\path2-to']
     .PARAMETER Repository
@@ -1351,10 +1474,10 @@ function test-UnReleasedModuleContent {
     None. Returns no objects or output (.NET types)
     .EXAMPLE
     PS> $Paths += (resolve-path c:\sc\verb*) ;
-    PS> test-UnReleasedModuleContent -Paths $Paths -verbose ; 
+    PS> test-ModuleUnReleasedContent -Paths $Paths -verbose ; 
     Run a pass against all paths below the c:\sc\ directory, with directory names starting with verb*, with verbose output.
     .EXAMPLE
-    PS> (resolve-path c:\sc\verb*) |  test-UnReleasedModuleContent;
+    PS> (resolve-path c:\sc\verb*) |  test-ModuleUnReleasedContent;
     Pipeline example, echo solely modules that need a fresh Build/Release
     .EXAMPLE
     PS> gcm -module verb-mods | where verb -eq 'test' | %{get-help $_.name -example}
@@ -1364,6 +1487,7 @@ function test-UnReleasedModuleContent {
     #>
     # VALIDATORS: [ValidateNotNull()][ValidateNotNullOrEmpty()][ValidateLength(24,25)][ValidateLength(5)][ValidatePattern("some\sregex\sexpr")][ValidateSet("USEA","GBMK","AUSYD")][ValidateScript({Test-Path $_ -PathType 'Container'})][ValidateScript({Test-Path $_})][ValidateRange(21,65)][ValidateCount(1,3)]
     [CmdletBinding()]
+    [Alias('test-UnReleasedModuleContent','test-ModuleBuild')]
     PARAM(
         [Parameter(Position=0,Mandatory=$false,ValueFromPipeline=$true,HelpMessage="Module source paths to be processed[-paths 'c:\path-to\','c:\path2-to']")]
         #[ValidateScript({Test-Path $_})]
@@ -1429,7 +1553,7 @@ function test-UnReleasedModuleContent {
     END {} ;
 }
 
-#*------^ test-UnReleasedModuleContent.ps1 ^------
+#*------^ test-ModuleUnReleasedContent.ps1 ^------
 
 
 #*------v Uninstall-AllModules.ps1 v------
@@ -1862,7 +1986,7 @@ Remove the -whatif to run a full execution & install.
 
 #*======^ END FUNCTIONS ^======
 
-Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,get-RepoModulesHighestVersion,test-IsUncPath,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,revert-moduleInstalledRevision,test-UnReleasedModuleContent,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
+Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScripts,Get-ModulePublishedVersion,get-ModuleRecentPublishedRevisions,get-RepoModulesHighestVersion,test-IsUncPath,Install-ModulesTin,load-Module,load-ModuleFT,mount-Module,register-localPSRepository,revert-moduleInstalledRevision,test-ModuleUnReleasedContent,Uninstall-AllModules,uninstall-ModulesObsolete,update-PSPowerShellGetLegacy -Alias *
 
 
 
@@ -1870,8 +1994,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUUJhYA3c8vgjYK2gRLudL++Q+
-# zQKgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUauLNvLbsAMqLmnpfTPPfA4P3
+# /WigggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -1886,9 +2010,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQz+Jmg
-# WKuDvq1jH9ANxR33i/Pu+DANBgkqhkiG9w0BAQEFAASBgGJJpNFigVBbSNuwIaYf
-# VZDz8BQtLXgImpb9c5NTeTbdw+x7GP0XKnbjLRKJPGGcauB300UGKwPolupfnjbM
-# PRQo1u8tGOmZ9DUbPy2gaMzuXL/kvLLyGkyuu3uq5rTOpasAzEsRmgLYVW04tDB6
-# nF6P3mA/gEOpRlHhFxK/FRHA
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSvAOGo
+# ijL+/CKcLHBeuQI+/q8yYzANBgkqhkiG9w0BAQEFAASBgBxzo/ZlNgpFJ0aPcdEK
+# HIwa+tn36OSEjyN8pP5OzBzkcB1bUUmwVXYb+RmYa/KGJysB25fCh7n/4fKLZJJQ
+# X/SoXT2yVxpAIhieRfc2BdW+jYsxGvx5x4E4TcnwSXva2pD8A87PIGyilqVLc37h
+# l0bGcrFrAsP3q+luT3m3L9o7
 # SIG # End signature block

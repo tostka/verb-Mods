@@ -12,7 +12,7 @@
 RootModule = 'verb-Mods.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.4.1'
+ModuleVersion = '1.5.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -69,7 +69,7 @@ Description = 'Generic module-related functions'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-ModuleRecentPublishedRevisions','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-ModuleUnReleasedContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
+FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-ModuleRecentPublishedRevisions','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTin','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-ModuleDevFunctionSync','test-ModuleUnReleasedContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
@@ -126,8 +126,8 @@ PrivateData = @{
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUoUGJaVVbs/uM/xfK2R/KFbKP
-# uc6gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU2n6r2XT4XZ7c4Dr/EdEJ3Dyl
+# bPygggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -142,9 +142,9 @@ PrivateData = @{
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBT0omEM
-# JKvNqik94JmWiY9yKm2ZlzANBgkqhkiG9w0BAQEFAASBgClW+IFb4UETO4FqPCdN
-# gGbElK+G9LoqJW22eqH8TFGLvWJV3/Qy5wDscc2sCrgNB19rSYW5pDAwk+blg6aE
-# LEtt+aCbvXU2/s6L8OrNecnFf6WB3nB5Rb9TE0M/0wcwc1pO0h3U1ImfEs/vyA95
-# /OXjOaWvNGDCRNuCL4lhgX8Y
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBS8qsH5
+# /hwK7ZbmX1AdSPEmF8T6pzANBgkqhkiG9w0BAQEFAASBgJsBSEeuDBpY/8mW2hkk
+# jEKHPw93WB83LCXd0hpo1efUVb707ydLt5aLrm9VxLDsO38nOV2ocLMxD2B5aBjc
+# iKaBdZKJ+8iK6TjVUnxcIyE7TNUHD/b0NnrlKWKrE0QAPNwU8c13XXYN7+3JoN64
+# YuGC9zdRTlJjWgDXMNAxFIgp
 # SIG # End signature block
