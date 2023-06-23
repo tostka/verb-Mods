@@ -20,7 +20,7 @@ function test-ModuleDevFunctionSync {
     AddedWebsite: URL
     AddedTwitter: URL
     REVISIONS
-    * 3:28 PM 6/23/2023 init
+    * 4:17 PM 6/23/2023 add:-ModulePrefix;CBH demo for it's use;  init
     .DESCRIPTION
     test-ModuleDevFunctionSync - Check specified dev directory *_func.ps1 files after -Cutoff date, for matching like-named scripts in module source directory for dev coded that hasn't been copied to the mod .ps1 copy. Also can prompt for/run Windiff compare per match.
     .PARAMETER Paths 
@@ -29,6 +29,8 @@ function test-ModuleDevFunctionSync {
     ModuleName to be checked against -Paths[-ModuleName 'verb-aad']
     .PARAMETER CutoffDate
     Date against which to filter *after* (checked against LastWriteTime)[-CutoffDate '3/22/2022']
+    .PARAMETER ModulePrefix
+    Optional parameter to override the default module prefix spec (which is normally calculated as (`$ModuleName.split('-')[1]))[-ModulePrefix 'AD']
     .PARAMETER DiffPrompt
     Switch that prompts each return for an optional Windiff pass[-DiffPrompt]
     .PARAMETER Repository
@@ -50,6 +52,9 @@ function test-ModuleDevFunctionSync {
     .EXAMPLE
     PS> test-ModuleDevFunctionSync -Paths @('C:\usr\work\o365\scripts\','c:\usr\work\ps\scripts\') -ModuleName verb-aad -CutoffDate '3/28/2022' -diffPrompt -verbose ;
     Run a pass against a directory, checking for scripts with name-noun-prefixes matching verb-AAD module (e.g. '-aad*'). Prompts each for optional WinDiff compare.
+    .EXAMPLE
+    PS> test-ModuleDevFunctionSync -Paths @('c:\usr\work\exch\scripts\','c:\usr\work\ps\scripts\') -ModuleName verb-ADMS -ModulePrefix AD -CutoffDate '3/28/2022' -diffPrompt -verbose ;
+    Run a pass against a directory, with a manual -ModulePrefix specified for verb-ADMS ('AD'), with diffPrompts, and a specified cutoff date
     .LINK
     https://github.com/tostka/verb-Mods
     #>
@@ -58,23 +63,25 @@ function test-ModuleDevFunctionSync {
     [Alias('test-UnReleasedModuleContent','test-ModuleBuild')]
     PARAM(
         [Parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true,HelpMessage="Development directories to be checked for updated xxx_func.ps1 files matching xxx.ps1 files in the specified -ModuleName repository\Public folder[-Paths 'c:\path-to\','c:\path-to2']")]
-        [ValidateScript({Test-Path $_ -PathType container})]
-        [string[]]$Paths,
+            [ValidateScript({Test-Path $_ -PathType container})]
+            [string[]]$Paths,
         [Parameter(Position=1,Mandatory=$true,HelpMessage="ModuleName to be checked against -Paths[-ModuleName 'verb-aad']")]
-        [string]$ModuleName,
+            [string]$ModuleName,
+        [Parameter(HelpMessage="Optional parameter to override the default module prefix spec (which is normally calculated as (`$ModuleName.split('-')[1]))[-ModulePrefix 'AD']")]
+            [string]$ModulePrefix,
         [Parameter(HelpMessage="Root from which ModuleName should be checked for matching GIT Repo subdirectory (defaults to local existing `$GIT_REPOSROOT)[-RepoRoot 'c:\sc\']")]
-        [ValidateScript({Test-Path $_ -PathType container})]
-        [string]$RepoRoot = $GIT_REPOSROOT, 
+            [ValidateScript({Test-Path $_ -PathType container})]
+            [string]$RepoRoot = $GIT_REPOSROOT, 
         [Parameter(HelpMessage="Date against which to filter *after* (checked against LastWriteTime)[-CutoffDate '3/22/2022']")]
-        [datetime]$CutoffDate,
+            [datetime]$CutoffDate,
         [Parameter(HelpMessage="Switch that prompts each return for an optional Windiff pass[-DiffPrompt]")]
-        [switch]$DiffPrompt,
+            [switch]$DiffPrompt,
         [Parameter(HelpMessage="[regex]Files Extensions to be excluded from the comparison[-rgxExcludeExts '(.txt|.xml)']")]
-        [regex]$rgxExcludeExts = '(\.nupkg|\.gitignore|\.*_.*)',
+            [regex]$rgxExcludeExts = '(\.nupkg|\.gitignore|\.*_.*)',
         [Parameter(HelpMessage="[regex]File Names to be excluded from the comparison[-rgxexclFiles '(.*.logs)']")]
-        [regex]$rgxexclFiles = '(.*-log.txt|ScriptAnalyzer-Results-.*\.xml|fingerprint)$',
+            [regex]$rgxexclFiles = '(.*-log.txt|ScriptAnalyzer-Results-.*\.xml|fingerprint)$',
         [Parameter(HelpMessage="[string]Repository to be checked against (defaults to value stored as `$global:localPsRepo)[-Repository SomeRepo]")]        
-        [string]$Repository=$localPsRepo
+            [string]$Repository=$localPsRepo
     ) ;
     BEGIN {
         $verbose = ($VerbosePreference -eq "Continue") ;
@@ -103,6 +110,10 @@ function test-ModuleDevFunctionSync {
                     filter = "*-$($ModuleName.split('-')[1])*_func.ps1" ; 
                     ea = 'STOP' ;
                 } ;
+                if($ModulePrefix){
+                    write-verbose "using manually specified -ModulePrefix:$($ModulePrefix)" ; 
+                    $pltGci.filter = "*-$($ModulePrefix)*_func.ps1" ; 
+                } ; 
                 write-verbose "get-childitem w`n$(($pltGci|out-string).trim())" ; 
                 $devfiles = get-childitem @pltGci |
                         ?{$_.extension -notmatch $rgxExcludeExts -AND $_.name -notmatch $rgxexclFiles} | 
