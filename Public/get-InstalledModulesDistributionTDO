@@ -1,0 +1,67 @@
+﻿# get-InstalledModulesDistributionTDO.ps1
+
+#*----------------v Function get-InstalledModulesDistributionTDO v------
+function get-InstalledModulesDistributionTDO {
+    <#
+    .SYNOPSIS
+    get-InstalledModulesDistributionTDO() - Polls each local $env:PSModulePath dir, for the number of Modules installed, returns a pscustomobject Location/Modules (count)
+    .NOTES
+    Author: Todd Kadrie
+    Website:	http://www.toddomation.com
+    Twitter:	http://twitter.com/tostka
+    REVISIONS   :
+    * 12:50 PM 9/18/2024 init; shift into verb-mods
+    * 1/14/21 Jeffery Hicks posted SB (blog post)
+    .DESCRIPTION
+    get-InstalledModulesDistributionTDO() - Polls each local $env:PSModulePath dir, for the number of Modules installed, returns a pscustomobject Location/Modules (count)
+    .PARAMETER Detail
+    Return list of all modules per dir
+    .INPUTS
+    Does not accept piped input.
+    .OUTPUTS
+    Returns an object with Location & Modules (count)
+    .EXAMPLE
+    PS> $imods = get-InstalledModulesDistributionTDO -detail ; 
+    PS> $imods | %{$_ | ft -a location,modulecount ; $_.Modules } ; 
+    Demo capture output and loop report
+    .EXAMPLE
+    PS> $imods = get-InstalledModulesDistributionTDO -detail ; 
+    PS> $imods | %{ write-host -foregroundcolor yellow "`n`n===`n$(($_ | ft -a location,modulecount| out-string).trim())`n" ; write-host -foregroundcolor gray "$(($_.Modules| out-string).trim())" } ; 
+    Demo fancier formatted reporting captured output
+    #>
+    [CmdletBinding()]
+    #[Alias('copy-Profile')]
+    PARAM (
+        [Parameter(HelpMessage='Switch to include list of all modules per dir[-Detail]')]
+            [switch] $Detail        
+    ) ;  # PARAM-E
+    BEGIN {
+        $verbose = ($VerbosePreference -eq 'Continue') ; 
+        $prpMods = 'Name','Version','ModuleType' ; 
+        $modPaths = $env:PSModulePath -split ";" ;
+        $whBnr5 =@{BackgroundColor = 'White' ; ForegroundColor = 'DarkRed' } ;
+        $ttl = $modPaths |  measure | select -expand count ; 
+		$modslist= Get-Module -ListAvailable ;
+    }  # BEG-E
+    PROCESS {
+        $procNo = 0 ; 
+		foreach ($loc in $modPaths) {
+            $sBnr5="`n#*______v PROCESSING : $($loc) v______" ; 
+            write-host @whBnr5 -obj "$((get-date).ToString('HH:mm:ss')):$($sBnr5)" ;
+			#[pscustomobject]@{
+            $hSum = [ordered]@{
+				Location = $loc ;
+				ModuleCount = ($modslist| where {$_.path -match $loc.replace("\","\\") } ).count
+			} ;
+            if($Detail){
+                $hSum.add('Modules',($modslist |? {$_.Path -match [regex]::Escape($loc)} | select $prpMods)) ; 
+            } ; 
+            [pscustomobject]$hSum | write-output ;
+             write-host @whBnr5 -obj "$((get-date).ToString('HH:mm:ss')):$($sBnr5.replace('_v','_^').replace('v_','^_'))`n" ;
+       
+        } # loop-E
+    } # PROC-E
+    END {
+        
+    } ; 
+} #*----------------^ END Function get-InstalledModulesDistributionTDO ^--------
