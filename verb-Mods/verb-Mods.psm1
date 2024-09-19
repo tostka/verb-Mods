@@ -5,7 +5,7 @@
   .SYNOPSIS
   verb-Mods - Generic module-related functions
   .NOTES
-  Version     : 1.5.0.0
+  Version     : 1.6.0.0
   Author      : Todd Kadrie
   Website     :	https://www.toddomation.com
   Twitter     :	@tostka
@@ -2166,8 +2166,8 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # SIG # Begin signature block
 # MIIELgYJKoZIhvcNAQcCoIIEHzCCBBsCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUeQndYly2FAXco51OkvUB999W
-# NdmgggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUht0Lc5GrdwI8cHdLTIlckbNz
+# u16gggI4MIICNDCCAaGgAwIBAgIQWsnStFUuSIVNR8uhNSlE6TAJBgUrDgMCHQUA
 # MCwxKjAoBgNVBAMTIVBvd2VyU2hlbGwgTG9jYWwgQ2VydGlmaWNhdGUgUm9vdDAe
 # Fw0xNDEyMjkxNzA3MzNaFw0zOTEyMzEyMzU5NTlaMBUxEzARBgNVBAMTClRvZGRT
 # ZWxmSUkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALqRVt7uNweTkZZ+16QG
@@ -2182,9 +2182,9 @@ Export-ModuleMember -Function check-ReqMods,Disconnect-PssBroken,find-profileScr
 # AWAwggFcAgEBMEAwLDEqMCgGA1UEAxMhUG93ZXJTaGVsbCBMb2NhbCBDZXJ0aWZp
 # Y2F0ZSBSb290AhBaydK0VS5IhU1Hy6E1KUTpMAkGBSsOAwIaBQCgeDAYBgorBgEE
 # AYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgorBgEEAYI3AgEEMBwG
-# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBSPB1W0
-# MJa9J8QIu4x34FJD9Zi0eDANBgkqhkiG9w0BAQEFAASBgLWoWi0RKqSoec9ABbUX
-# Na2bf0UL1pWsYmNap3vTCAtsoVKxOaWIyrRMBJ5HKIkblOJ9WiWVNdqX0XGyy224
-# MoaUKw4ebfUfi0zGhzY6QVs8ntACQctv09CtG8Y3lVYxvJ9pr5zD5hOq1ePBWbvF
-# tRvpslffSTInc6DYxoXTdfMY
+# CisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3DQEJBDEWBBQ8oxib
+# a5S2O+X9gv5Csm3onuFAsTANBgkqhkiG9w0BAQEFAASBgGzlkmoIo9orwC3bCGhG
+# vtvI99eFGViDze4DfJvXDUnia2V9fc+5jhlZOtjEhxJmYLvow2sOhPAqhm16HSjg
+# Ybgn+fAvmX+phLJOBP8SeaSUbIVPMtz3TQTdnDKl8hYGt0yyc4f7hiEhkNLBPVNr
+# rVgIsghLO3jjt4wvbig4w/KU
 # SIG # End signature block
