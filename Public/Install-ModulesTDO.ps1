@@ -18,6 +18,8 @@ function Install-ModulesTDO {
     AddedWebsite: 
     AddedTwitter: 
     REVISIONS
+    * 10:58 AM 11/4/2024 got through debugging/non-whatif pass on Curly: Worked for funcs used, into new _install-ThisModule; so far so good
+    * 3:27 PM 11/1/2024 roughed in, undebugged _install-ThisModule(), and call code, need to step debug through it
     * 2:30 PM 10/31/2024 added params: UpdateToLatest, UpdateMinDaysOld, RequiredVersion to drive update choices, and ensure that only mature new releases are installed (gt 30 days released). 
     * 4:26 PM 10/30/2024 retooled to support inbound ModuleName;RequiredVersion -Module spec (verify, upgrade to specified version); 
         Now tests for specified RequiredVersion, and upgrades if less than. 
@@ -98,6 +100,187 @@ function Install-ModulesTDO {
         $prpGMom = 'Name','Version','Path'; 
         $prpGIMo = 'Name','Version','InstalledLocation','InstalledDate','UpdatedDate','Repository' ; 
 
+        #*======v FUNCTIONS v======
+
+        #*------v Function _install-ThisModule v------
+        function _install-ThisModule {
+            [CmdletBinding()] 
+            [Alias('Confirm-ModuleDependancy','Install-ModulesTin')]
+            Param(
+                [Parameter(HelpMessage="Overrides warning messages about installation conflicts about existing commands on a computer. Overwrites existing commands that have the same name as commands being installed by a module. AllowClobber and Force can be used together in an `Install-Module` command.")]
+                    [switch]$AllowClobber,
+                [Parameter(HelpMessage="Allows you to install a module marked as a pre-release.")]
+                    [switch]$AllowPrerelease,
+                [Parameter(HelpMessage="Prompts you for confirmation before running the `Install-Module` cmdlet.")]
+                    [switch]$Confirm,
+                [Parameter(HelpMessage="Specifies a user account that has rights to install a module for a specified package provider or source.")]
+                    [pscredential]$Credential,
+                [Parameter(HelpMessage="Installs a module and overrides warning messages about module installation conflicts. If a module with the same name already exists on the computer, Force allows for multiple versions to be installed. If there is an existing module with the same name and version, Force overwrites that version. Force and AllowClobber can be used together in an `Install-Module` command.")]
+                    [switch]$Force,
+                [Parameter(HelpMessage="Specifies the maximum version of a single module to install. The version installed must be less than or equal to MaximumVersion . If you want to install multiple modules, you cannot use MaximumVersion . MaximumVersion and RequiredVersion cannot be used in the same `Install-Module` command.")]
+                    [version]$MaximumVersion,                
+                [Parameter(HelpMessage="Specifies the minimum version of a single module to install. The version installed must be greater than or equal to MinimumVersion . If there is a newer version of the module available, the newer version is installed. If you want to install multiple modules, you cannot use MinimumVersion . MinimumVersion and RequiredVersion cannot be used in the same `Install-Module` command.")]
+                    [version]$MinimumVersion,
+                [Parameter(HelpMessage="Specifies the exact names of modules to install from the online gallery. A comma-separated list of module names is accepted. The module name must match the module name in the repository. Use `Find-Module` to get a list of module names. ")]
+                    [ValidateNotNullOrEmpty()]
+                    [string[]]$Name,
+                [Parameter(HelpMessage="Specifies a proxy server for the request, rather than connecting directly to the Internet resource.")]
+                    [uri]$Proxy,
+                [Parameter(HelpMessage="Specifies a user account that has permission to use the proxy server that is specified by the Proxy parameter.")]
+                    [pscredential]$ProxyCredential,
+                [Parameter(HelpMessage="Use the Repository parameter to specify which repository is used to download and install a module. Used when multiple repositories are registered. Specifies the name of a registered repository in the `Install-Module` command. To register a repository, use `Register-PSRepository`. To display registered repositories, use `Get-PSRepository`.")]
+                    [string[]]$Repository,    
+                [Parameter(HelpMessage="Specifies the exact version of a single module to install. If there is no match in the repository for the specified version, an error is displayed. If you want to install multiple modules, you cannot use RequiredVersion . RequiredVersion cannot be used in the same `Install-Module` command as MinimumVersion or MaximumVersion.")]
+                    [version]$RequiredVersion,
+                [Parameter(Position=1,HelpMessage="Module installation scope (CurrentUser|AllUsers - defaults CU)[-Scope AllUsers]")]
+                    [ValidateSet("AllUsers","CurrentUser")]
+                    [string]$Scope='CurrentUser',
+                [Parameter(HelpMessage="Allows you to install a newer version of a module that already exists on your computer. For example, when an existing module is digitally signed by a trusted publisher but the new version is notdigitally signed by a trusted publisher.")]
+                    [switch]$SkipPublisherCheck,                
+                [Parameter(HelpMessage="Shows what would happen if an `Install-Module` command was run. The cmdlet is not run.")] 
+                    [switch] $whatIf
+            ) ;
+            # B-transplant
+            TRY{
+                $pltIsModule=[ordered]@{
+                    Name=$Name;
+                    Scope=$scope ;
+                    AllowClobber = $true;
+                    Force =  $true;
+                    ErrorAction="Stop" ;
+                    Verbose = $true ;
+                    whatif=$($whatif) ;
+                } ;
+                if($RequiredVersion){
+                    $smsg = "(adding `$pltIsModule.'RequiredVersion',$($RequiredVersion))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('RequiredVersion',$RequiredVersion) ;
+                } ;
+                if($Repository){
+                    $smsg = "(adding `$pltIsModule.'Repository',$($Repository))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('Repository',$Repository) ;
+                } ; 
+                if($AllowPrerelease){
+                    $smsg = "(adding `$pltIsModule.'AllowPrerelease',$($AllowPrerelease))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('AllowPrerelease',$AllowPrerelease) ;
+                } ; 
+                if($MaximumVersion){
+                    $smsg = "(adding `$pltIsModule.'MaximumVersion',$($MaximumVersion))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('MaximumVersion',$MaximumVersion) ;
+                } ; 
+                if($MinimumVersion){
+                    $smsg = "(adding `$pltIsModule.'MinimumVersion',$($MinimumVersion))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('MinimumVersion',$MinimumVersion) ;
+                } ; 
+                if($Proxy){
+                    $smsg = "(adding `$pltIsModule.'Proxy',$($Proxy))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('Proxy',$Proxy) ;
+                } ; 
+                if($ProxyCredential){
+                    $smsg = "(adding `$pltIsModule.'ProxyCredential',$($ProxyCredential))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('ProxyCredential',$ProxyCredential) ;
+                } ; 
+                if($SkipPublisherCheck){
+                    $smsg = "(adding `$pltIsModule.'SkipPublisherCheck',$($SkipPublisherCheck))" ;
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    $pltIsModule.add('SkipPublisherCheck',$SkipPublisherCheck) ;
+                } ; 
+
+                $smsg = "get-module -Name $($Name) -ea 0 | remove-module -Force" ; 
+                if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
+                else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
+                get-module -Name $Name -ea 0 | remove-module -Force ; 
+
+                $smsg = "Install-Module w`n$(($pltIsModule|out-string).trim())" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } 
+                else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+
+                Install-Module @pltIsModule ;
+
+                if(-not $whatif -ANd (get-module -Name $pltIsModule.name -ListAvailable | ?{$_.version -eq $RequiredVersion})){
+                                
+                    $smsg = "get-module -Name $($latestLocalRev.Name) -listavailable " ; 
+                    if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
+
+                    if($AllObsoVersions = get-module -Name $pltIsModule.name -ListAvailable | ?{$_.version -ne $RequiredVersion}){
+                        foreach($ObsoVers in $AllObsoVersions){
+                            # then run forced uninstall of old rev, using RequiredVersion:
+                            $pltUSMod=[ordered]@{
+                                name = $ObsoVers.Name ;
+                                RequiredVersion = $ObsoVers.version  ;
+                                force  = $true ; 
+                                Verbose = ($PSBoundParameters['Verbose'] -eq $true) ;
+                                ErrorAction = 'STOP' ;
+                                whatif = $($whatif) ;
+                            } ;
+                            $smsg = "Obsolete Version Removal: Uninstall-Module w`n$(($pltUSMod|out-string).trim())" ; 
+                            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                            #Uninstall-Module -force -name $pltIsModule.Name -RequiredVersion $ObsoVers.version -verbose -ea STOP ;  ;
+                            Uninstall-Module @pltUSMod ; 
+
+                        } ; 
+                    } ; 
+                    # finally ipmof the installed rev
+                    $smsg = "import-module -Name $($latestLocalRev.Name) -force -verbose " ; 
+                    if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
+
+                    $pltIPMod=[ordered]@{
+                        Name = $pltIsModule.name ;
+                        RequiredVersion = $pltIsModule.RequiredVersion ;
+                        Force = $true ;
+                        verbose = $true ;
+                        erroraction = 'STOP';
+                    } ;
+                    $smsg = "import-module w`n$(($pltIPMod|out-string).trim())" ; 
+                    if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                    #import-module -Name $pltIsModule.name -RequiredVersion $pltIsModule.RequiredVersion -Force -verbose -ea STOP;
+                    import-module @pltIPMod ; 
+
+                    $smsg = "get-module -Name $($pltIPMod.Name)" ; 
+                    if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
+                    else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
+
+                    get-module -Name $pltIPMod.Name -ErrorAction STOP 
+
+                }elseif($whatif){
+                    write-host "-whatif: skipping balance" ; 
+                } else { 
+                    $smsg = "Missing upgraded version: $($ModRequiredVersion)! (skipping prior $($latestLocalRev.name): $($latestLocalRev.version) uninstall" ; 
+                    write-warning $smsg ; 
+                    throw $smsg ; 
+                } ; 
+            } CATCH {
+                $ErrTrapd=$Error[0] ;
+                $smsg = "$('*'*5)`nFailed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: `n$(($ErrTrapd|out-string).trim())`n$('-'*5)" ;
+                $smsg += "`n$($ErrTrapd.Exception.Message)" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level WARN -Indent}
+                else{ write-WARNING "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
+                BREAK ;
+            } ; 
+            # E-transplant 
+        } ;
+        #*------^ END Function _install-ThisModule ^------
+
+        #*======^ END FUNCTIONS ^======
+
+        #*======v SUB MAIN v======
+
         $ttl=($Modules|measure).count ; 
         $Procd=0 ; 
         $smsg= "Confirming $(($Modules|measure).count) PS Modules:" ; 
@@ -115,6 +298,8 @@ function Install-ModulesTDO {
             throw $smsg ; 
             break ; 
         } ; 
+
+        #*======^ END SUB MAIN ^======
     }
     PROCESS {
         foreach ($Mod in $Modules){
@@ -230,7 +415,15 @@ function Install-ModulesTDO {
                 } ; 
                 if(-not $GMOm -AND -not $GIMO){
                     if($FMOm){
-                        
+                        if(-not $ModRequiredVersion){
+                            $ModRequiredVersion = $FMOm.version ; 
+                        } ; 
+                        if($pltIsModule.keys -contains 'RequiredVersion'){
+                            $pltIsModule.RequiredVersion = $ModRequiredVersion ; 
+                        }else{
+                            $pltIsModule.add('RequiredVersion',$ModRequiredVersion) ; 
+                        } ; 
+
                         $smsg= "INSTALLING MATCH:`n$(($FMOm| fl $propsFindModV |out-string).trim())" ; 
                         if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
                         else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
@@ -238,24 +431,9 @@ function Install-ModulesTDO {
                         $smsg= "install-module w`n$(($pltIsModule|out-string).trim())" ; 
                         if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
                         else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                        TRY { 
-                            install-module @pltIsModule ; 
-                        $error.clear() ;
-                        } CATCH {
-                            $ErrTrapd=$Error[0] ;
-                            $smsg = "Failed processing $($ErrTrapd.Exception.ItemName). `nError Message: $($ErrTrapd.Exception.Message)`nError Details: $($ErrTrapd)" ;
-                            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
-                            else{ write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                            #-=-record a STATUSWARN=-=-=-=-=-=-=
-                            $statusdelta = ";WARN"; # CHANGE|INCOMPLETE|ERROR|WARN|FAIL ;
-                            if(gv passstatus -scope Script -ea 0){$script:PassStatus += $statusdelta } ;
-                            if(gv -Name PassStatus_$($tenorg) -scope Script -ea 0){set-Variable -Name PassStatus_$($tenorg) -scope Script -Value ((get-Variable -Name PassStatus_$($tenorg)).value + $statusdelta)} ; 
-                            #-=-=-=-=-=-=-=-=
-                            $smsg = "FULL ERROR TRAPPED (EXPLICIT CATCH BLOCK WOULD LOOK LIKE): } catch[$($ErrTrapd.Exception.GetType().FullName)]{" ; 
-                            if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level ERROR } #Error|Warn|Debug 
-                            else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                            Break #Opts: STOP(debug)|EXIT(close)|CONTINUE(move on in loop cycle)|BREAK(exit loop iteration)|THROW $_/'CustomMsg'(end script with Err output)
-                        } ; 
+                        
+                        _install-ThisModule @pltIsModule ; 
+
                     } else {
                         $smsg= "$($Mod):;NOT-FOUND W FIND-MODULE!" ; 
                         if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
@@ -310,6 +488,7 @@ function Install-ModulesTDO {
                             else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
                             #Levels:Error|Warn|Info|H1|H2|H3|H4|H5|Debug|Verbose|Prompt|Success
 
+                            # B-transplant
                             $smsg = "get-module -Name $($latestLocalRev.Name) -ea 0 | remove-module -Force" ; 
                             if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
                             else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
@@ -319,62 +498,8 @@ function Install-ModulesTDO {
                             if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } 
                             else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
 
-                            Install-Module @pltIsModule ;
+                            _install-ThisModule @pltIsModule ; 
 
-                            if(-not $whatif -ANd (get-module -Name $pltIsModule.name -ListAvailable | ?{$_.version -eq $ModRequiredVersion})){
-                                
-                                $smsg = "get-module -Name $($latestLocalRev.Name) -listavailable " ; 
-                                if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
-                                else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
-
-                                if($AllObsoVersions = get-module -Name $pltIsModule.name -ListAvailable | ?{$_.version -ne $ModRequiredVersion}){
-                                    foreach($ObsoVers in $AllObsoVersions){
-                                        # then run forced uninstall of old rev, using ModRequiredVersion:
-                                        $pltUSMod=[ordered]@{
-                                            name = $ObsoVers.Name ;
-                                            RequiredVersion = $ObsoVers.version  ;
-                                            force  = $true ; 
-                                            Verbose = ($PSBoundParameters['Verbose'] -eq $true) ;
-                                            ErrorAction = 'STOP' ;
-                                            whatif = $($whatif) ;
-                                        } ;
-                                        $smsg = "Obsolete Version Removal: Uninstall-Module w`n$(($pltUSMod|out-string).trim())" ; 
-                                        if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                                        #Uninstall-Module -force -name $pltIsModule.Name -RequiredVersion $ObsoVers.version -verbose -ea STOP ;  ;
-                                        Uninstall-Module @pltUSMod ; 
-
-                                    } ; 
-                                } ; 
-                                # finally ipmof the installed rev
-                                $smsg = "import-module -Name $($latestLocalRev.Name) -force -verbose " ; 
-                                if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
-                                else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
-
-                                $pltIPMod=[ordered]@{
-                                    Name = $pltIsModule.name ;
-                                    RequiredVersion = $pltIsModule.RequiredVersion ;
-                                    Force = $true ;
-                                    verbose = $true ;
-                                    erroraction = 'STOP';
-                                } ;
-                                $smsg = "import-module w`n$(($pltIPMod|out-string).trim())" ; 
-                                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } else{ write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ;
-                                #import-module -Name $pltIsModule.name -RequiredVersion $pltIsModule.RequiredVersion -Force -verbose -ea STOP;
-                                import-module @pltIPMod ; 
-
-                                $smsg = "get-module -Name $($pltIPMod.Name)" ; 
-                                if($verbose){if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level VERBOSE } 
-                                else{ write-verbose "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; } ; 
-
-                                get-module -Name $pltIPMod.Name -ErrorAction STOP 
-
-                            }elseif($whatif){
-                                write-host "-whatif: skipping balance" ; 
-                            } else { 
-                                $smsg = "Missing upgraded version: $($ModRequiredVersion)! (skipping prior $($latestLocalRev.name): $($latestLocalRev.version) uninstall" ; 
-                                write-warning $smsg ; 
-                                throw $smsg ; 
-                            } ; 
                         } else {
                              $smsg = "Invalid response. SKIPPING" ;
                             if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level WARN }
@@ -406,7 +531,8 @@ function Install-ModulesTDO {
             } CATCH {
                 $ErrTrapd=$Error[0] ;
                 $smsg = "`n$(($ErrTrapd | fl * -Force|out-string).trim())" ;
-                write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+                if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level WARN -Indent} 
+                else{ write-WARNING "$((get-date).ToString('HH:mm:ss')):$($smsg)" } ; 
             } ;
             $smsg= "$($sBnrS.replace('-v','-^').replace('v-','^-'))" ;
             if ($logging) { Write-Log -LogContent $smsg -Path $logfile -useHost -Level Info } #Error|Warn|Debug 
