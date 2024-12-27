@@ -18,6 +18,7 @@ function Install-ModulesTDO {
     AddedWebsite: 
     AddedTwitter: 
     REVISIONS
+    * 1:46 PM 12/27/2024 appears an obsolete dupe of install-modulesTDO.ps1, git it, and delete
     * 4:26 PM 10/30/2024 retooled for to support inbound ModuleName;REquiredVersion -Module spec; 
         added more extensive testing, split out the get-installedmodule & gmo -list tests into separate steps, then checked which had latest rev, 
         and used that as the standard for curr latest rev (frequently installedmodule is behind gmo -list).
