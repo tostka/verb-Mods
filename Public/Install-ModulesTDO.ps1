@@ -2,7 +2,7 @@
 function Install-ModulesTDO {
     <#
     .SYNOPSIS
-    Install-ModulesTDO - Loops a list of modules (PSGallery, local repo; any locally registered Repo), checks install state (against get-module -list, and get-installedmodule), and if neither found, find-Module's & install-Module's current rev from specified repo. Supports optionally specifying -Module string array as series of "ModuleName;RequiredVersion" (e.g. 'ExchangeOnlineManagement;3.6.0'), to drive tests for unupgraded existing Module installs (upgrades when -lt the specified RequiredVersion)
+    Install-ModulesTDO - Loops a list of modules (PSGallery, local repo; any locally registered Repo), checks install state (against get-module -list, and get-installedmodule), and if neither found, find-Module's & install-Module's current rev from specified repo. Supports optionally specifying -Module string array as series of "ModuleName;RequiredVersion" (e.g. 'ExchangeOnlineManagement;3.6.0'), to drive tests for unupgraded existing Module installs (upgrades when -lt the specified RequiredVersion). Also uninstalls obsolete older versions.
     .NOTES
     Version     : 1.0.0.0
     Author      : Todd Kadrie
@@ -18,6 +18,7 @@ function Install-ModulesTDO {
     AddedWebsite: 
     AddedTwitter: 
     REVISIONS
+    * 2:17 PM 6/23/2026 added CBH to run an install of latest vers of all mods on a target repo
     * 10:58 AM 11/4/2024 got through debugging/non-whatif pass on Curly: Worked for funcs used, into new _install-ThisModule; so far so good
     * 3:27 PM 11/1/2024 roughed in, undebugged _install-ThisModule(), and call code, need to step debug through it
     * 2:30 PM 10/31/2024 added params: UpdateToLatest, UpdateMinDaysOld, RequiredVersion to drive update choices, and ensure that only mature new releases are installed (gt 30 days released). 
@@ -60,6 +61,32 @@ function Install-ModulesTDO {
     .EXAMPLE
     PS> install-ModulesTDO -Modules 'AzureAD;2.0.2.182','ExchangeOnlineManagement;3.6.0' -Scope AllUsers -Repository PSGallery -verbose -whatif ;
     Demo installing array of AzureAD & EOM modules, each with a RequiredVersion specified (after semicolon delimiter), to AllUsers scope, from PSGallery repo, with verbose outputs, and whatif specified
+    .EXAMPLE
+    PS> $whatif = $true ; 
+    PS> $trepo = 'RepoX' ; 
+    PS> $tmods = @() ; 
+    PS> gci (Get-PSRepository $trepo).sourcelocation | %{
+    PS>     write-verbose "parse the pkg names into modulename and version" ; 
+    PS>     $elems = $_.name.split('.');
+    PS>     $tmod = $elems[0];
+    PS>     $tvers = [version]($elems[1..3] -join '.') ;
+    PS>     $hshMod = [ordered]@{module = $tmod; version = $tvers} ;
+    PS>     $tmods += New-Object -TypeName PsObject -Property $hshMod ; 
+    PS> } ; 
+    PS> write-verbose "reduce to only the latest vers of each module, build a 'modname;modversion' string to feed into install-modulestdo()" ; 
+    PS> $procmods = $tmods.module | select -unique | %{
+    PS>     $thisUmod = $_ ; 
+    PS>     $tmods | ?{$_.module -eq $thisUmod} | sort version | select -last 1 | %{ "$($_.module);$($_.version)" | write-output } ; 
+    PS> } ; 
+    PS> $pltIsMod = [ordered]@{
+    PS>     modules = $procmods ;
+    PS>     scope = 'currentuser'  ;
+    PS>     repository = $trepo ;
+    PS>     verbose = $true ;
+    PS>     whatif = $($whatif) ;
+    PS> }
+    PS> write-host -foregroundcolor green "$((get-date).ToString('HH:mm:ss')):install-modulestdo w`n$(($pltIsMod|out-string).trim())" ; 
+    PS> install-modulestdo @pltIsMod ; 
     .LINK
     https://github.com/tostka/verb-mods
     #>
