@@ -69,7 +69,7 @@ Description = 'Generic module-related functions'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-ModuleRecentPublishedRevisions','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTDO','_install-ThisModule','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-ModuleDevFunctionSync','test-ModuleUnReleasedContent','Uninstall-AllModules','uninstall-ModuleAllVersionsTDO','_install-ThisModule','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
+FunctionsToExport = @('check-ReqMods','Disconnect-PssBroken','find-profileScripts','Get-ModulePublishedVersion','get-ModuleRecentPublishedRevisions','get-RepoModulesHighestVersion','test-IsUncPath','Install-ModulesTDO','_install-ThisModule','load-Module','load-ModuleFT','mount-Module','register-localPSRepository','revert-moduleInstalledRevision','test-ModuleDevFunctionSync','test-ModuleUnReleasedContent','Uninstall-AllModules','uninstall-ModulesObsolete','update-PSPowerShellGetLegacy')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
@@ -148,4 +148,3 @@ PrivateData = @{
 # jPPPxM41cwSGRRXPHGvWpTMwLQIMuP9S1AYz88uVZQtXU5zl2Vd2pH+3GEESYY54
 # lsQZuPrLj6BoHiEYm/nQoLAG
 # SIG # End signature block
-

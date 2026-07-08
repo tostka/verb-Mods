@@ -1,0 +1,577 @@
+﻿2026-07-08 16:05:04 INFO:  : #*======v VERB-dev.psm1:verb-mods v======
+2026-07-08 16:05:05 INFO:  : Run: reset-ModulePublishingDirectory -ModuleName verb-mods
+2026-07-08 16:05:06 ##  : 
+#*------v PROCESSING : verb-mods v------
+2026-07-08 16:05:06 INFO:  : Pre-purge (CHANGELOG|README)\.md$ Root dir matches from :
+2026-07-08 16:05:07 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Resource\
+2026-07-08 16:05:07 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Licenses\
+2026-07-08 16:05:07 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Docs\
+2026-07-08 16:05:08 INFO:  : ==C:\sc\verb-mods\CHANGELOG.md:
+2026-07-08 16:05:08 INFO:  : ==C:\sc\verb-mods\README.md:
+2026-07-08 16:05:08 INFO:  : ==C:\sc\verb-mods\Docs\Quick-Start-Installation-and-Example.md:
+2026-07-08 16:05:09 ##  : 
+#*------^ PROCESSING : verb-mods ^------
+2026-07-08 16:05:09 INFO:  : Run: populate-ModulePublishingDirectory -ModuleName verb-mods
+2026-07-08 16:05:10 ##  : 
+#*------v PROCESSING : verb-mods v------
+2026-07-08 16:05:10 INFO:  : Locating (CHANGELOG|README)\.md$ Root dir matches from :
+2026-07-08 16:05:11 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Resource\
+2026-07-08 16:05:11 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Licenses\
+2026-07-08 16:05:11 INFO:  : verb-mods resolved $ModPubPath:C:\sc\verb-mods\verb-mods\
+$ModResPath:C:\sc\verb-mods\Docs\
+2026-07-08 16:05:12 INFO:  : copy-item w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+path                           {C:\sc\verb-mods\CHANGELOG.md, C:\sc\verb-mods\README.md, C:\sc\verb-mods\Docs\Quick-Start-Installation-and-Example.md}                                                                                                                        
+destination                    C:\sc\verb-mods\verb-mods\                                                                                                                                                                                                                     
+force                          True                                                                                                                                                                                                                                           
+erroraction                    STOP                                                                                                                                                                                                                                           
+verbose                        False                                                                                                                                                                                                                                          
+whatif                         False
+--$pltCI.path:
+C:\sc\verb-mods\CHANGELOG.md
+C:\sc\verb-mods\README.md
+C:\sc\verb-mods\Docs\Quick-Start-Installation-and-Example.md
+2026-07-08 16:05:12 ##  : 
+#*------^ PROCESSING : verb-mods ^------
+2026-07-08 16:05:13 INFO:  : Run: Remove any non-pub garbage cp'd into c:\sc\verb-mods\verb-mods -ModuleName verb-mods
+2026-07-08 16:05:13 INFO:  : Validate updated verb-mods\verb-mods dir contents against Manifest:
+Run: test-modulemanifest -Path C:\sc\verb-mods\verb-mods\verb-mods.psd1
+2026-07-08 16:05:13 INFO:  : NON-Republish pass detected:
+MERGE parm specified as well:`n-Merge Public|Internal|Classes include subdirs module content into updated .psm1
+-Sign updated files.
+-Uninstall/Remove existing profile module
+-Copy new module to profile
+-Confirm: Get-Module -ListAvailable
+-Check/Update existing Psd1 Version
+-Publish-Module
+-Remove existing installed profile module
+-Test Install-Module
+-Test Import-Module
+2026-07-08 16:05:14 INFO:  : -Merge specified...
+2026-07-08 16:05:14 INFO:  : ConvertTo-ModuleMergedTDO w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModuleName                     verb-mods                                                                                                                                                                                                                                      
+ModuleSourcePath               {c:\sc\verb-mods\Public, c:\sc\verb-mods\Internal}                                                                                                                                                                                             
+ModuleDestinationPath          c:\sc\verb-mods\verb-mods                                                                                                                                                                                                                      
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+LogSpec                        {logging, logfile, transcript}                                                                                                                                                                                                                 
+NoAliasExport                                                                                                                                                                                                                                                                 
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+showdebug                      False                                                                                                                                                                                                                                          
+whatif                         False
+2026-07-08 16:05:15 INFO:  : ConvertTo-ModuleMergedTDO w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModuleName                     verb-mods                                                                                                                                                                                                                                      
+ModuleSourcePath               {c:\sc\verb-mods\Public, c:\sc\verb-mods\Internal}                                                                                                                                                                                             
+ModuleDestinationPath          c:\sc\verb-mods\verb-mods                                                                                                                                                                                                                      
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+LogSpec                        {logging, logfile, transcript}                                                                                                                                                                                                                 
+NoAliasExport                                                                                                                                                                                                                                                                 
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+showdebug                      False                                                                                                                                                                                                                                          
+whatif                         False
+2026-07-08 16:05:15 INFO:  : (NON-dyn psm1 detected - purging existing non-CBH content...)
+2026-07-08 16:05:16 INFO:  : Initialize-PSModuleDirectories w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModuleSourcePath               {c:\sc\verb-mods\Public, c:\sc\verb-mods\Internal}                                                                                                                                                                                             
+ModuleDestinationPath          c:\sc\verb-mods\verb-mods                                                                                                                                                                                                                      
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+whatif                         False
+2026-07-08 16:05:16 INFO:  : 
+#*------v (1/2):C:\sc\verb-mods\Public v------
+2026-07-08 16:05:17 INFO:  : Processing 18 $ComponentScripts files through Remove-AuthenticodeSignature...
+2026-07-08 16:05:17 INFO:  : Processing (1/18):C:\sc\verb-mods\Public\check-ReqMods.ps1...
+2026-07-08 16:05:17 INFO:  : Processing (2/18):C:\sc\verb-mods\Public\Disconnect-PssBroken.ps1...
+2026-07-08 16:05:18 INFO:  : Processing (3/18):C:\sc\verb-mods\Public\find-profileScripts.ps1...
+2026-07-08 16:05:18 INFO:  : Processing (4/18):C:\sc\verb-mods\Public\Get-ModulePublishedVersion.ps1...
+2026-07-08 16:05:19 INFO:  : Processing (5/18):C:\sc\verb-mods\Public\get-ModuleRecentPublishedRevisions.ps1...
+2026-07-08 16:05:19 INFO:  : Processing (6/18):C:\sc\verb-mods\Public\get-RepoModulesHighestVersion.ps1...
+2026-07-08 16:05:20 INFO:  : Processing (7/18):C:\sc\verb-mods\Public\Install-ModulesTDO.ps1...
+2026-07-08 16:05:20 INFO:  : Processing (8/18):C:\sc\verb-mods\Public\load-Module.ps1...
+2026-07-08 16:05:21 INFO:  : Processing (9/18):C:\sc\verb-mods\Public\load-ModuleFT.ps1...
+2026-07-08 16:05:21 INFO:  : Processing (10/18):C:\sc\verb-mods\Public\mount-module.ps1...
+2026-07-08 16:05:22 INFO:  : Processing (11/18):C:\sc\verb-mods\Public\register-localPSRepository.ps1...
+2026-07-08 16:05:22 INFO:  : Processing (12/18):C:\sc\verb-mods\Public\revert-ModuleInstalledRevision.ps1...
+2026-07-08 16:05:23 INFO:  : Processing (13/18):C:\sc\verb-mods\Public\test-ModuleDevFunctionSync.ps1...
+2026-07-08 16:05:23 INFO:  : Processing (14/18):C:\sc\verb-mods\Public\test-ModuleUnReleasedContent.ps1...
+2026-07-08 16:05:23 INFO:  : Processing (15/18):C:\sc\verb-mods\Public\Uninstall-AllModules.ps1...
+2026-07-08 16:05:24 INFO:  : Processing (16/18):C:\sc\verb-mods\Public\uninstall-ModuleAllVersionsTDO.ps1...
+2026-07-08 16:05:24 INFO:  : Processing (17/18):C:\sc\verb-mods\Public\uninstall-ModulesObsolete.ps1...
+2026-07-08 16:05:25 INFO:  : Processing (18/18):C:\sc\verb-mods\Public\update-PSPowerShellGetLegacy.ps1...
+2026-07-08 16:05:25 INFO:  : 
+#*------v (2/2):C:\sc\verb-mods\Internal v------
+2026-07-08 16:05:26 INFO:  : Processing 0 $ComponentScripts files through Remove-AuthenticodeSignature...
+2026-07-08 16:05:26 INFO:  : (Updating Psm1 Export-ModuleMember -Function to reflect Public modules)
+2026-07-08 16:05:27 INFO:  : Adding:FooterBlock...
+2026-07-08 16:05:27 INFO:  : confirm-ModuleBuildSync w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModPsdPath                     c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP                                                                                                                                                                                                   
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+NoTest                         True                                                                                                                                                                                                                                           
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:28 INFO:  : (test-path confirms $ModPsm1 & $ModTestPs1)
+2026-07-08 16:05:28 INFO:  : Import-PowerShellDataFile w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP                                                                                                                                                                                                   
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+verbose                        False
+2026-07-08 16:05:29 INFO:  : (resolved Module attributes:
+$ModuleName:	verb-mods
+$ModRoot:	c:\sc\verb-mods
+$ModPsd1:	c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP
+$ModPsm1:	c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP
+$ModTestPs1:	c:\sc\verb-mods\Tests\verb-mods.tests.ps1
+$psd1Vers:	1.7.0
+$psd1guid:	6dd1ddc7-85d7-48d9-b82e-3eefb6763afb)
+2026-07-08 16:05:29 INFO:  : confirm-ModulePsd1Version w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP                                                                                                                                                                                                   
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:30 INFO:  : (Version already updated to match)
+2026-07-08 16:05:30 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:31 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:31 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:32 INFO:  : #*======^ confirm-ModulePsd1Version: c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP ^======
+2026-07-08 16:05:32 INFO:  : (confirm-ModulePsd1Version:Success)
+2026-07-08 16:05:33 INFO:  : confirm-ModulePsm1Version w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP                                                                                                                                                                                                   
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:33 WARNING:  : In:c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP
+Version present:(1.6.1)
+*does not* properly match:1.7.0
+FORCING MATCHING UPDATE!
+2026-07-08 16:05:34 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:34 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:35 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:35 INFO:  : #*======^ confirm-ModulePsm1Version: c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP ^======
+2026-07-08 16:05:36 INFO:  : (confirm-ModulePsm1Version:Success)
+2026-07-08 16:05:36 INFO:  : (-NoTest: skipping confirm-ModuleTestPs1Guid)
+2026-07-08 16:05:37 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP                                                                                                                                                                                                   
+Module                         c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP                                                                                                                                                                                                   
+Pester                         (SKIPPED)                                                                                                                                                                                                                                      
+Guid                           (SKIPPED)                                                                                                                                                                                                                                      
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:37 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:38 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP                                                                                                                                                                                                   
+Module                         c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP                                                                                                                                                                                                   
+Pester                         (SKIPPED)                                                                                                                                                                                                                                      
+Guid                           (SKIPPED)                                                                                                                                                                                                                                      
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:38 INFO:  : #*======^ confirm-ModuleBuildSync:  ^======
+2026-07-08 16:05:39 INFO:  : (confirm-ModuleBuildSync:Success)
+2026-07-08 16:05:39 INFO:  : Test-ModuleTMPFiles w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModuleNamePSM1Path             c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP                                                                                                                                                                                                   
+verbose                        False
+2026-07-08 16:05:39 INFO:  : #*======v Test-ModuleTMPFiles: c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP v======
+2026-07-08 16:05:40 INFO:  : 
+Psm1:c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP
+Psd1:c:\sc\verb-mods\verb-mods\verb-mods.psd1_TMP
+2026-07-08 16:05:40 INFO:  : Test-ModuleManifest:PASSED
+2026-07-08 16:05:41 INFO:  : Creating Testable c:\sc\verb-mods\verb-mods\f9ab64c4-fdee-4ac0-9e3c-99874ad4f604.psm1
+ to validate c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP will Import-Module
+2026-07-08 16:05:41 INFO:  : Ipmo: PASSED
+2026-07-08 16:05:42 INFO:  : (remove-module -name c:\sc\verb-mods\verb-mods\f9ab64c4-fdee-4ac0-9e3c-99874ad4f604.psm1 -force)
+2026-07-08 16:05:42 INFO:  : (remove-item -path c:\sc\verb-mods\verb-mods\f9ab64c4-fdee-4ac0-9e3c-99874ad4f604.psm1 -ErrorAction SilentlyContinue ; 
+2026-07-08 16:05:43 INFO:  : (remove-item -path c:\sc\verb-mods\verb-mods\f9ab64c4-fdee-4ac0-9e3c-99874ad4f604.psd1 -ErrorAction SilentlyContinue ; 
+2026-07-08 16:05:43 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       f9ab64c4-fdee-4ac0-9e3c-99874ad4f604                                                                                                                                                                                                           
+Module                         f9ab64c4-fdee-4ac0-9e3c-99874ad4f604                                                                                                                                                                                                           
+Valid                          False
+2026-07-08 16:05:44 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:44 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       f9ab64c4-fdee-4ac0-9e3c-99874ad4f604                                                                                                                                                                                                           
+Module                         f9ab64c4-fdee-4ac0-9e3c-99874ad4f604                                                                                                                                                                                                           
+Valid                          True
+2026-07-08 16:05:44 INFO:  : #*======^ Test-ModuleTMPFiles: c:\sc\verb-mods\verb-mods\verb-mods.psm1_TMP ^======
+2026-07-08 16:05:45 INFO:  : #*======^ ConvertTo-ModuleMergedTDO: ^======
+2026-07-08 16:05:45 INFO:  : (Test-ModuleManifest:PASSED)
+2026-07-08 16:05:46 INFO:  : Checking sync of Psd1 module guid to the Pester Test Script: c:\sc\verb-mods\Tests\verb-mods.tests.ps1
+2026-07-08 16:05:46 INFO:  : confirm-ModuleBuildSync w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModPsdPath                     C:\sc\verb-mods\verb-mods\verb-mods.psd1                                                                                                                                                                                                       
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:47 INFO:  : (test-path confirms $ModPsm1 & $ModTestPs1)
+2026-07-08 16:05:47 INFO:  : Import-PowerShellDataFile w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           C:\sc\verb-mods\verb-mods\verb-mods.psd1                                                                                                                                                                                                       
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+verbose                        False
+2026-07-08 16:05:48 INFO:  : (resolved Module attributes:
+$ModuleName:	verb-mods
+$ModRoot:	c:\sc\verb-mods
+$ModPsd1:	C:\sc\verb-mods\verb-mods\verb-mods.psd1
+$ModPsm1:	C:\sc\verb-mods\verb-mods\verb-mods.psm1
+$ModTestPs1:	c:\sc\verb-mods\Tests\verb-mods.tests.ps1
+$psd1Vers:	1.7.0
+$psd1guid:	6dd1ddc7-85d7-48d9-b82e-3eefb6763afb)
+2026-07-08 16:05:48 INFO:  : confirm-ModulePsd1Version w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           C:\sc\verb-mods\verb-mods\verb-mods.psd1                                                                                                                                                                                                       
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:49 INFO:  : (Version already updated to match)
+2026-07-08 16:05:49 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:50 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:50 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:51 INFO:  : #*======^ confirm-ModulePsd1Version: C:\sc\verb-mods\verb-mods\verb-mods.psd1 ^======
+2026-07-08 16:05:51 INFO:  : (confirm-ModulePsd1Version:Success)
+2026-07-08 16:05:52 INFO:  : confirm-ModulePsm1Version w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           C:\sc\verb-mods\verb-mods\verb-mods.psm1                                                                                                                                                                                                       
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:52 INFO:  : (Version already updated to match)
+2026-07-08 16:05:53 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:53 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:53 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:54 INFO:  : #*======^ confirm-ModulePsm1Version: C:\sc\verb-mods\verb-mods\verb-mods.psm1 ^======
+2026-07-08 16:05:54 INFO:  : (confirm-ModulePsm1Version:Success)
+2026-07-08 16:05:55 INFO:  : Checking sync of Psd1 module guid to the Pester Test Script: c:\sc\verb-mods\Tests\verb-mods.tests.ps1
+2026-07-08 16:05:55 INFO:  : confirm-ModuleTestPs1Guid w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\Tests\verb-mods.tests.ps1                                                                                                                                                                                                      
+RequiredGuid                   6dd1ddc7-85d7-48d9-b82e-3eefb6763afb                                                                                                                                                                                                           
+whatif                         False                                                                                                                                                                                                                                          
+verbose                        False
+2026-07-08 16:05:56 INFO:  : (Guid  already updated to match)
+2026-07-08 16:05:56 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Guid                           6dd1ddc7-85d7-48d9-b82e-3eefb6763afb                                                                                                                                                                                                           
+Valid                          False
+2026-07-08 16:05:57 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:57 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Guid                           6dd1ddc7-85d7-48d9-b82e-3eefb6763afb                                                                                                                                                                                                           
+Valid                          True
+2026-07-08 16:05:57 INFO:  : (confirm-ModuleTestPs1Guid:Success)
+2026-07-08 16:05:58 INFO:  : $objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       C:\sc\verb-mods\verb-mods\verb-mods.psd1                                                                                                                                                                                                       
+Module                         C:\sc\verb-mods\verb-mods\verb-mods.psm1                                                                                                                                                                                                       
+Pester                         c:\sc\verb-mods\Tests\verb-mods.tests.ps1                                                                                                                                                                                                      
+Guid                           6dd1ddc7-85d7-48d9-b82e-3eefb6763afb                                                                                                                                                                                                           
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          False
+2026-07-08 16:05:58 INFO:  : (SET:$objReport.Valid = $true ;)
+2026-07-08 16:05:59 INFO:  : (PIPELINE:New-Object PSObject -Property $objReport | write-output)
+$objReport
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Manifest                       C:\sc\verb-mods\verb-mods\verb-mods.psd1                                                                                                                                                                                                       
+Module                         C:\sc\verb-mods\verb-mods\verb-mods.psm1                                                                                                                                                                                                       
+Pester                         c:\sc\verb-mods\Tests\verb-mods.tests.ps1                                                                                                                                                                                                      
+Guid                           6dd1ddc7-85d7-48d9-b82e-3eefb6763afb                                                                                                                                                                                                           
+Version                        1.7.0                                                                                                                                                                                                                                          
+Valid                          True
+2026-07-08 16:05:59 INFO:  : #*======^ confirm-ModuleBuildSync:  ^======
+2026-07-08 16:06:00 INFO:  : (confirm-ModuleBuildSync:Success)
+2026-07-08 16:06:00 INFO:  : Signing appropriate files...
+2026-07-08 16:06:01 INFO:  : set-AuthenticodeSignatureTDO w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+file                           {C:\sc\verb-mods\rebuild-module.ps1, C:\sc\verb-mods\requirements.psd1, C:\sc\verb-mods\Tests\PPoShScriptingStyle.psd1, C:\sc\verb-mods\Tests\ToddomationScriptingStyle-medium.psd1...}                                                        
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+whatif                         False
+2026-07-08 16:06:01 INFO:  : Removing existing profile verb-mods content...
+2026-07-08 16:06:02 INFO:  : Uninstall-ModuleForce w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+ModuleName                     verb-mods                                                                                                                                                                                                                                      
+Verbose                        False                                                                                                                                                                                                                                          
+whatif                         False
+2026-07-08 16:06:06 INFO:  : 
+#*------v Uninstall PSGet Mod:verb-Mods:v1.6.1 v------
+2026-07-08 16:06:28 INFO:  : 
+#*------^ Uninstall PSGet Mod:verb-Mods:v1.6.1 ^------
+2026-07-08 16:06:28 INFO:  : (Processing $env:PSModulePath paths, for surviving locked copies of verb-mods to *manually* purge...)
+2026-07-08 16:06:29 INFO:  : Checking: verb-mods below: C:\Users\kadritss\Documents\WindowsPowerShell\Modules...
+2026-07-08 16:06:29 INFO:  : Checking: verb-mods below: C:\ProgramData\Boxstarter...
+2026-07-08 16:06:30 INFO:  : Checking: verb-mods below: C:\Program Files\WindowsPowerShell\Modules...
+2026-07-08 16:06:30 INFO:  : Checking: verb-mods below: C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules...
+2026-07-08 16:06:30 INFO:  : Checking: verb-mods below: C:\Program Files (x86)\AutoIt3\AutoItX...
+2026-07-08 16:06:31 INFO:  : Copying module to profile (net of .git & .vscode dirs, and backed up content)...
+2026-07-08 16:06:31 INFO:  : $srcFiles:post-filter out:
+\\(Package|Tests|logs)\\|(\.ps[dm]1_(\d+-\d+[AP]M|TMP)|-LOG-BATCH-EXEC-\d+-\d+[AP]M-log\.txt|\\(fingerprint|Psd1filelist))$
+2026-07-08 16:06:32 INFO:  : Discovered mod-copy files ($srcFiles.fullname):w
+C:\sc\verb-mods\verb-Mods\CHANGELOG.md
+C:\sc\verb-mods\verb-Mods\Quick-Start-Installation-and-Example.md
+C:\sc\verb-mods\verb-Mods\README.md
+C:\sc\verb-mods\verb-Mods\verb-Mods.psd1
+C:\sc\verb-mods\verb-Mods\verb-Mods.psm1
+2026-07-08 16:06:33 INFO:  : Non-Pre-existing:$to:C:\Users\kadritss\Documents\WindowsPowerShell\Modules\verb-mods\verb-mods
+Pre-creating before copy...
+2026-07-08 16:06:33 INFO:  : Mode   LastWriteTime       Length Name     
+----   -------------       ------ ----     
+d----- 7/8/2026 4:06:33 PM        verb-mods
+2026-07-08 16:06:34 INFO:  : -Merge:exclude $MergeBuildExcl \\(Public|Internal|External|Private)\\.*.ps1$ files from temp build copy
+2026-07-08 16:06:34 INFO:  : Recursively remove empty subdirs below C:\Users\kadritss\Documents\WindowsPowerShell\Modules\verb-mods\verb-mods...
+2026-07-08 16:06:35 INFO:  : Move/Flatten Resource etc files into root of temp Build dir...
+2026-07-08 16:06:35 INFO:  : Unable to locate a problematic temp mod dir C:\Users\kadritss\Documents\WindowsPowerShell\Modules\verb-mods\verb-mods COPY of Quick-Start-Installation-and-Example.md
+2026-07-08 16:06:36 INFO:  : Unable to locate a problematic temp mod dir C:\Users\kadritss\Documents\WindowsPowerShell\Modules\verb-mods\verb-mods COPY of CHANGELOG.md
+2026-07-08 16:06:36 INFO:  : Unable to locate a problematic temp mod dir C:\Users\kadritss\Documents\WindowsPowerShell\Modules\verb-mods\verb-mods COPY of README.md
+2026-07-08 16:06:36 INFO:  : copy/Flatten Resource etc files into source root c:\sc\verb-mods\verb-mods dir...
+2026-07-08 16:06:37 INFO:  : Resolved $ModPsdPath:
+C:\sc\verb-mods\verb-mods\verb-mods.psd1
+2026-07-08 16:06:37 INFO:  : 
+==Verifying CU:Mods\verb-mods\verb-mods\Quick-Start-Installation-and-Example.md:
+2026-07-08 16:06:38 INFO:  : 
+==Verifying CU:Mods\verb-mods\verb-mods\CHANGELOG.md:
+2026-07-08 16:06:38 INFO:  : 
+==Verifying CU:Mods\verb-mods\verb-mods\README.md:
+2026-07-08 16:06:39 INFO:  : Running pre-Publish-Module .psd1 test:
+Test-ModuleManifest -path C:\sc\verb-mods\verb-mods\verb-mods.psd1
+2026-07-08 16:06:39 INFO:  : (Test-ModuleManifest:PASSED)
+2026-07-08 16:06:40 INFO:  : (Profiling Repo: get-PSRepository -name lyncRepo...)
+2026-07-08 16:06:41 INFO:  : 
+Publish-Module w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Name                           verb-mods                                                                                                                                                                                                                                      
+Repository                     lyncRepo                                                                                                                                                                                                                                       
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+Verbose                        True                                                                                                                                                                                                                                           
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+errorVariable                  pbmo_Err                                                                                                                                                                                                                                       
+whatif                         False
+2026-07-08 16:06:56 WARNING:  :  FOUND $pbmo_Err: import-module HAD ERRORS! (no action, could be non-impacting)
+2026-07-08 16:06:57 WARNING:  :  Publish-Module PBMO UNDEFINED ERROR! System.Management.Automation.StopUpstreamCommandsException: System error.     at Microsoft.PowerShell.Commands.SelectObjectCommand.ProcessRecord()     at System.Management.Automation.CommandProcessor.ProcessRecord() (But PublishModule doesn't bother to return a functional Error object with an Exception, so we can't trust/parse or act on it. Just echo)
+2026-07-08 16:06:58 INFO:  : Waiting for:find-module -name verb-mods -Repository lyncRepo ...
+2026-07-08 16:07:02 INFO:  : Install-Module w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Name                           verb-mods                                                                                                                                                                                                                                      
+Repository                     lyncRepo                                                                                                                                                                                                                                       
+RequiredVersion                1.7.0                                                                                                                                                                                                                                          
+scope                          CurrentUser                                                                                                                                                                                                                                    
+force                          True                                                                                                                                                                                                                                           
+AllowClobber                   True                                                                                                                                                                                                                                           
+errorVariable                  ismo_Err                                                                                                                                                                                                                                       
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+whatif                         False
+2026-07-08 16:07:09 INFO:  : Testing Module:Import-Module w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Name                           verb-mods                                                                                                                                                                                                                                      
+ErrorAction                    Stop                                                                                                                                                                                                                                           
+errorVariable                  ipmo_Err                                                                                                                                                                                                                                       
+force                          True                                                                                                                                                                                                                                           
+verbose                        True
+2026-07-08 16:07:10 INFO:  : Retrieving matching Repo .nupkg file:
+gci \\lynmsv10\lync_fs\scripts\sc\verb-mods.1.7.0.nupkgl..
+2026-07-08 16:07:11 INFO:  : Proper updated .nupkg file found:verb-mods.1.7.0.nupkg, copying to local Pkg directory.
+2026-07-08 16:07:12 INFO:  : remove-UnneededFileVariants w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\Package                                                                                                                                                                                                                        
+Include                        verb-mods*.nupkg                                                                                                                                                                                                                               
+Pattern                                                                                                                                                                                                                                                                       
+FilterOn                       CreationTime                                                                                                                                                                                                                                   
+Keep                           2                                                                                                                                                                                                                                              
+KeepToday                      True                                                                                                                                                                                                                                           
+verbose                        True                                                                                                                                                                                                                                           
+whatif                         False
+2026-07-08 16:07:13 INFO:  : remove-UnneededFileVariants w
+Name                           Value                                                                                                                                                                                                                                          
+----                           -----                                                                                                                                                                                                                                          
+Path                           c:\sc\verb-mods\Tests                                                                                                                                                                                                                          
+Include                        ScriptAnalyzer-Results-*.xml                                                                                                                                                                                                                   
+Pattern                                                                                                                                                                                                                                                                       
+FilterOn                       CreationTime                                                                                                                                                                                                                                   
+Keep                           4                                                                                                                                                                                                                                              
+KeepToday                      True                                                                                                                                                                                                                                           
+verbose                        True                                                                                                                                                                                                                                           
+whatif                         False
+2026-07-08 16:07:14 INFO:  : 
+---------------------------------------------------------------------------------
+Processing completed: verb-mods :: c:\sc\verb-mods
+- Script is currently installed (from PsRep: with scope:CurrentUser, under TORO\kadritss profile
+
+- To update other scopes/accounts on same machine, or install on other machines:
+    1. Uninstall current module copies:
+
+        Uninstall-Module -Name verb-mods) -AllVersion -whatif ;
+
+    2. Install the current version (or higher) from the Repo:lyncRepo:
+
+        install-Module -name verb-mods -Repository lyncRepo -RequiredVersion 1.7.0 -scope currentuser -whatif ;
+
+    3. Reimport the module with -force, to ensure the current installed verison is loaded:
+
+        import-Module -name verb-mods -force -verbose ;
+
+#-=-=-Stacked list for the above: CURRENTUSER=-=-=-=-=-=
+$whatif=$false ;  $tScop = 'CurrentUser' ; $tMod = 'verb-mods' ; $tVer = '1.7.0' ;
+if($IsCoreCLR){
+    write-warning "WARNING YOU'RE INSTALLING INTO POWERSHELLCORE (7+)!
+THE MODULE WILL GO INTO \DOCS\POWERSHELL\MODULES
+(vs \DOCS\WINDOWSPOWERSHELL\MODULES)!" ; 
+    $bRet=Read-Host "Enter YYY to continue. Anything else will exit"  ; 
+    if ($bRet.ToUpper() -eq "YYY") {} else {WRITE-WARNING "HALTING!" ; BREAK} ; 
+} ; 
+TRY {
+    switch($tScop){
+        'CurrentUser'{$ModPath = "$(split-path $profile)\Modules\$($tmod)" }
+        'AllUsers' {$ModPath = "$($env:ProgramFiles)\WindowsPowerShell\Modules)\$($tmod)"} 
+    } ;
+    if($Repository = (Get-PSRepository -Name $localPSRepo -ea 'STOP').name){
+        rmo -Name $tmod -ea 0 ;
+        Uninstall-Module -Name $tmod -AllVersion -force -ea 0 -whatif:$($whatif);
+        gi -path $ModPath -ea 0 |ri -Recurse -force -verbose  -whatif:$($whatif) ;
+        if($thisVers = find-module -name $tmod -Repository $Repository -RequiredVersion $tVer){
+            $thisvers  | ft -a Name,Version,Repository ; 
+            $thisVers | install-Module -scope $tScop -Force -AllowClobber -ea 'STOP' -whatif:$($whatif) ;
+        }else {
+            throw "Unable to:find-module -name $($tmod) -Repository $($Repository) -RequiredVersion $($tVer)" ; 
+            break ; 
+        } ; 
+        rmo -Name $tmod -force -ea 0 ;
+        ipmo -name $tmod -force -verbose -ea 'STOP'  ;
+        gmo -name $tmod | ? version -ne $tVer | rmo -Force -Verbose ; 
+        gmo -name $tmod -list ;
+    } else {
+        throw "Unable to resolve `lyncRepo to a configured local PSRepository" ;
+    } ;
+} CATCH {
+    $ErrTrapd=$Error[0] ;
+    $smsg = "
+$(($ErrTrapd | fl * -Force|out-string).trim())" ;
+    write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+} ;
+#-=-=-=-=-=-=-=-=
+#-=-=-Stacked list for the above: ALLUSERS=-=-=-=-=-=
+$whatif=$false ; $tScop = 'AllUsers' ; $tMod = 'verb-mods' ; $tVer = '1.7.0' ;  
+if($IsCoreCLR){
+    write-warning "WARNING YOU'RE INSTALLING INTO POWERSHELLCORE (7+)!
+THE MODULE WILL GO INTO \DOCS\POWERSHELL\MODULES
+(vs \DOCS\WINDOWSPOWERSHELL\MODULES)!" ; 
+    $bRet=Read-Host "Enter YYY to continue. Anything else will exit"  ; 
+    if ($bRet.ToUpper() -eq "YYY") {} else {WRITE-WARNING "HALTING!" ; BREAK} ; 
+} ; 
+TRY {
+    switch($tScop){
+        'CurrentUser'{$ModPath = "$(split-path $profile)\Modules\$($tmod)" }
+        'AllUsers' {$ModPath = "$($env:ProgramFiles)\WindowsPowerShell\Modules)\$($tmod)"} 
+    } ;
+    if($Repository = (Get-PSRepository -Name $localPSRepo -ea 'STOP').name){
+        rmo -Name $tmod -ea 0 ;
+        Uninstall-Module -Name $tmod -AllVersion -force -ea 0 -whatif:$($whatif);
+        gi -path $ModPath -ea 0 |ri -Recurse -force -verbose  -whatif:$($whatif) ;
+        if($thisVers = find-module -name $tmod -Repository $Repository -RequiredVersion $tVer){
+            $thisvers  | ft -a Name,Version,Repository ; 
+            $thisVers | install-Module -scope $tScop -Force -AllowClobber -ea 'STOP' -whatif:$($whatif) ;
+        }else {
+            throw "Unable to:find-module -name $($tmod) -Repository $($Repository) -RequiredVersion $($tVer)" ; 
+            break ; 
+        } ; 
+        rmo -Name $tmod -force -ea 0 ;
+        ipmo -name $tmod -force -verbose -ea 'STOP'  ;
+        gmo -name $tmod | ? version -ne $tVer | rmo -Force -Verbose ; 
+        gmo -name $tmod -list ;
+    } else {
+        throw "Unable to resolve `lyncRepo to a configured local PSRepository" ;
+    } ;
+} CATCH {
+    $ErrTrapd=$Error[0] ;
+    $smsg = "
+$(($ErrTrapd | fl * -Force|out-string).trim())" ;
+    write-warning "$((get-date).ToString('HH:mm:ss')):$($smsg)" ;
+} ;
+#-=-=-=-=-=-=-=-=
+
+- You may also want to run the configured Pester Tests of the new script:
+
+        . c:\sc\verb-mods\Tests\verb-mods.tests.ps1
+
+Full Processing Details can be found in:
+
+c:\scripts\logs\update-NewModule-verb-mods-LOG-BATCH-EXEC-20260708-1605PM-log.txt
+
+---------------------------------------------------------------------------------
+
+2026-07-08 16:07:15 INFO:  : 
+(Most recent processing log can be found at:c:\sc\verb-mods\update-NewModule-verb-mods-LOG-BATCH-EXEC-20260708-1605PM-log.txt)
+(perm copy stored at:c:\scripts\logs\update-NewModule-verb-mods-LOG-BATCH-EXEC-20260708-1605PM-log.txt
